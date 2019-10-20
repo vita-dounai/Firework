@@ -51,6 +51,43 @@ func checkIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	return true
 }
 
+func checkIdentifier(t *testing.T, expression ast.Expression, value string) bool {
+	identifier, ok := expression.(*ast.Identifier)
+	if !ok {
+		t.Errorf("expression is not *ast.Identifier. got=%T", expression)
+		return false
+	}
+
+	if identifier.Value != value {
+		t.Errorf("identifier.Value is not %s, got=%s", value, identifier.Value)
+		return false
+	}
+
+	if identifier.TokenLiteral() != value {
+		t.Errorf("identifier.TokenLiteral is not %s, got=%s", value, identifier.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
+func checkLiteralExpression(
+	t *testing.T,
+	expression ast.Expression,
+	expected interface{},
+) bool {
+	switch v := expected.(type) {
+	case int:
+		return checkIntegerLiteral(t, expression, int64(v))
+	case int64:
+		return checkIntegerLiteral(t, expression, v)
+	case string:
+		return checkIdentifier(t, expression, v)
+	}
+	t.Errorf("unsupported type, got=%T", expression)
+	return false
+}
+
 func checkParseErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
 
@@ -232,7 +269,7 @@ func TestPrefixExpressions(t *testing.T) {
 	}
 }
 
-func TestParsingInfixExpressions(t *testing.T) {
+func TestInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
 		leftValue  int64
@@ -266,14 +303,14 @@ func TestParsingInfixExpressions(t *testing.T) {
 		if !ok {
 			t.Fatalf("exp is not ast.InfixExpression. got=%T", stmt.Expression)
 		}
-		if !checkIntegerLiteral(t, exp.Left, tt.leftValue) {
+		if !checkLiteralExpression(t, exp.Left, tt.leftValue) {
 			return
 		}
 		if exp.Operator != tt.operator {
 			t.Fatalf("exp.Operator is not '%s'. got=%s",
 				tt.operator, exp.Operator)
 		}
-		if !checkIntegerLiteral(t, exp.Right, tt.rightValue) {
+		if !checkLiteralExpression(t, exp.Right, tt.rightValue) {
 			return
 		}
 	}
