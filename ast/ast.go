@@ -1,7 +1,10 @@
 package ast
 
-import "github.com/vita-dounai/Firework/token"
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/vita-dounai/Firework/token"
+)
 
 type Node interface {
 	TokenLiteral() string
@@ -100,6 +103,15 @@ func (ie *InfixExpression) String() string {
 
 	return out.String()
 }
+
+type Boolean struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *Boolean) expressionNode()      {}
+func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
+func (b *Boolean) String() string       { return b.Token.Literal }
 
 type LetStatement struct {
 	Token token.Token
