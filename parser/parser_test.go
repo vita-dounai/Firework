@@ -139,37 +139,33 @@ func checkParseErrors(t *testing.T, p *Parser) {
 }
 
 func TestLetStatement(t *testing.T) {
-	input := `
-	let x = 6;
-	let y = 10;
-	let foobar = 838383;
-	`
-	l := lexer.NewLexer(input)
-
-	p := NewParser(l)
-
-	program := p.ParseProgram()
-	checkParseErrors(t, p)
-
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
-	}
-
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements doesn't contain 3 statements, got=%d", len(program.Statements))
-	}
-
 	tests := []struct {
+		input              string
 		expectedIdentifier string
+		expectedValue      interface{}
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{"let x = 5;", "x", 5},
+		{"let y = true;", "y", true},
+		{"let foobar = y", "foobar", "y"},
 	}
 
-	for i, tt := range tests {
-		statement := program.Statements[i]
-		if !checkLetStatement(t, statement, tt.expectedIdentifier) {
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		checkParseErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statements, got=%d",
+				len(program.Statements))
+		}
+
+		stmt := program.Statements[0]
+		if !checkLetStatement(t, stmt, tt.expectedIdentifier) {
+			return
+		}
+		val := stmt.(*ast.LetStatement).Value
+		if !checkLiteralExpression(t, val, tt.expectedValue) {
 			return
 		}
 	}
@@ -472,6 +468,18 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"!(true == true)",
 			"(!(true == true))",
 		},
+		{
+			"a + add(b * c) + d",
+			"((a + add((b * c))) + d)",
+		},
+		{
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+		},
+		{
+			"add(a + b + c * d / f + g)",
+			"add((((a + b) + ((c * d) / f)) + g))",
+		},
 	}
 	for _, tt := range tests {
 		l := lexer.NewLexer(tt.input)
@@ -636,4 +644,42 @@ func TestFunctionLiteral(t *testing.T) {
 	}
 
 	checkInfixExpression(t, bodyStmt.Expression, "x", "+", "y")
+}
+
+func TestCallExpression(t *testing.T) {
+	input := "add(1, 2 * 3, 4 + 5)"
+
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain %d statements, got=%d\n",
+			1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt is not ast.ExpressionStatement, got=%T",
+			program.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*ast.CallExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.CallExpression, got=%T",
+			stmt.Expression)
+	}
+
+	if !checkIdentifier(t, exp.Function, "add") {
+		return
+	}
+
+	if len(exp.Arguments) != 3 {
+		t.Fatalf("wrong length of arguments, got=%d", len(exp.Arguments))
+	}
+
+	checkLiteralExpression(t, exp.Arguments[0], 1)
+	checkInfixExpression(t, exp.Arguments[1], 2, "*", 3)
+	checkInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }
