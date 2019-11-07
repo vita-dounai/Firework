@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/vita-dounai/Firework/evaluator"
 	"github.com/vita-dounai/Firework/lexer"
-	"github.com/vita-dounai/Firework/token"
+	"github.com/vita-dounai/Firework/parser"
 )
 
 const PROMPT = ">> "
@@ -23,8 +24,24 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		l := lexer.NewLexer(line)
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			fmt.Printf("%+v\n", tok)
+		p := parser.NewParser(l)
+
+		program := p.ParseProgram()
+		if len(p.Errors()) != 0 {
+			printParserErrors(out, p.Errors())
+			continue
 		}
+
+		evaluated := evaluator.Eval(program)
+		if evaluated != nil {
+			io.WriteString(out, evaluated.Inspect())
+			io.WriteString(out, "\n")
+		}
+	}
+}
+
+func printParserErrors(out io.Writer, errors []string) {
+	for _, msg := range errors {
+		io.WriteString(out, "\t"+msg+"\n")
 	}
 }
