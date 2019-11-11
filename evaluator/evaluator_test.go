@@ -69,6 +69,10 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"3 * 3 * 3 + 10", 37},
 		{"3 * (3 * 3) + 10", 37},
 		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
+		{"5 ** 2", 25},
+		{"5 + 5 ** 2", 30},
+		{"(5 + 5) ** 2", 100},
+		{"5 * 5 ** 2", 125},
 	}
 
 	for _, tt := range tests {
@@ -259,7 +263,7 @@ func TestLetStatements(t *testing.T) {
 }
 
 func TestFunctionObject(t *testing.T) {
-	input := "fn(x) {x + 2;};"
+	input := "|x| {x + 2;};"
 
 	evaluated := checkEval(input)
 	fn, ok := evaluated.(*object.Function)
@@ -286,12 +290,12 @@ func TestFunctionApplication(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"let identity = fn(x) { x; }; identity(5);", 5},
-		{"let identity = fn(x) { return x; }; identity(5);", 5},
-		{"let double = fn(x) { x * 2; }; double(5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5, 5);", 10},
-		{"let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
-		{"fn(x) { x; }(5)", 5},
+		{"let identity = |x| { x; }; identity(5);", 5},
+		{"let identity = |x| { return x; }; identity(5);", 5},
+		{"let double = |x| { x * 2; }; double(5);", 10},
+		{"let add = |x, y| { x + y; }; add(5, 5);", 10},
+		{"let add = |x, y| { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"|x| { x; }(5)", 5},
 	}
 	for _, tt := range tests {
 		checkIntegerObject(t, checkEval(tt.input), tt.expected)

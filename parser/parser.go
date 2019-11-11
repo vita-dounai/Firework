@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strconv"
 
 	"github.com/vita-dounai/Firework/ast"
@@ -21,6 +22,7 @@ const (
 	LESSGREATER // < or >
 	SUM         // +
 	PRODUCT     // *
+	EXP         // **
 	PREFIX      // - or !
 	CALL        // funcion call
 )
@@ -34,6 +36,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.EXP:      EXP,
 	token.LPAREN:   CALL,
 }
 
@@ -172,6 +175,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	debug.PrintStack()
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
 }
@@ -210,31 +214,18 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	expression := &ast.IfExpression{
 		Token: p.curToken,
 	}
-
-	if !p.expectPeek(token.LPAREN) {
-		return nil
-	}
-
 	p.nextToken()
+
 	expression.Condition = p.parseExpression(LOWEST)
 
-	if !p.expectPeek(token.RPAREN) {
-		return nil
-	}
-
-	if !p.expectPeek(token.LBRACE) {
-		return nil
-	}
+	p.expectPeek(token.LBRACE)
 
 	expression.Consequence = p.parseBlockStatement()
 
 	if p.peekTokenIs(token.ELSE) {
 		p.nextToken()
 
-		if !p.expectPeek(token.LBRACE) {
-			return nil
-		}
-
+		p.expectPeek(token.LBRACE)
 		expression.Alternative = p.parseBlockStatement()
 	}
 
@@ -244,10 +235,13 @@ func (p *Parser) parseIfExpression() ast.Expression {
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	block := &ast.BlockStatement{Token: p.curToken}
 	block.Statements = []ast.Statement{}
-
 	p.nextToken()
 
 	for !p.curTokenIs(token.RBRACE) {
+		if p.curTokenIs(token.EOF) {
+			return nil
+		}
+
 		statement := p.parseStatement()
 		if statement != nil {
 			block.Statements = append(block.Statements, statement)
@@ -314,10 +308,6 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 func (p *Parser) parseFunctionLiteral() ast.Expression {
 	function := &ast.FunctionLiteral{Token: p.curToken}
 
-	if !p.expectPeek(token.LPAREN) {
-		return nil
-	}
-
 	function.Parameters = p.parseFunctionParameters()
 
 	if !p.expectPeek(token.LBRACE) {
@@ -331,13 +321,12 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
 
 func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 	identifiers := []*ast.Identifier{}
+	p.nextToken()
 
-	if p.peekTokenIs(token.RPAREN) {
+	if p.curTokenIs(token.VERTICAL) {
 		p.nextToken()
 		return identifiers
 	}
-
-	p.nextToken()
 
 	identifier := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 	identifiers = append(identifiers, identifier)
@@ -350,7 +339,7 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 		identifiers = append(identifiers, identifier)
 	}
 
-	if !p.expectPeek(token.RPAREN) {
+	if !p.expectPeek(token.VERTICAL) {
 		return nil
 	}
 
@@ -411,7 +400,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	parser.registerPrefix(token.FALSE, parser.parseBoolean)
 	parser.registerPrefix(token.LPAREN, parser.parseGroupedExpression)
 	parser.registerPrefix(token.IF, parser.parseIfExpression)
-	parser.registerPrefix(token.FUNCTION, parser.parseFunctionLiteral)
+	parser.registerPrefix(token.VERTICAL, parser.parseFunctionLiteral)
 
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
@@ -422,6 +411,7 @@ func NewParser(l *lexer.Lexer) *Parser {
 	parser.registerInfix(token.NOT_EQ, parser.parseInfixExpression)
 	parser.registerInfix(token.LT, parser.parseInfixExpression)
 	parser.registerInfix(token.GT, parser.parseInfixExpression)
+	parser.registerInfix(token.EXP, parser.parseInfixExpression)
 	parser.registerInfix(token.LPAREN, parser.parseCallExpression)
 
 	return parser

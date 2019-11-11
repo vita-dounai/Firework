@@ -107,13 +107,21 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.EXCLAMATION, l.Ch)
 		}
 	case '*':
-		tok = newToken(token.ASTERISK, l.Ch)
+		nextCh := l.peekChar()
+		if nextCh == '*' {
+			tok = token.Token{Type: token.EXP, Literal: token.EXP}
+			l.readChar()
+		} else {
+			tok = newToken(token.ASTERISK, l.Ch)
+		}
 	case '/':
 		tok = newToken(token.SLASH, l.Ch)
 	case '<':
 		tok = newToken(token.LT, l.Ch)
 	case '>':
 		tok = newToken(token.GT, l.Ch)
+	case '|':
+		tok = newToken(token.VERTICAL, l.Ch)
 	case 0:
 		tok = token.Token{Type: token.EOF, Literal: ""}
 	default:

@@ -352,6 +352,7 @@ func TestInfixExpressions(t *testing.T) {
 		{"5 < 5;", 5, "<", 5},
 		{"5 == 5;", 5, "==", 5},
 		{"5 != 5;", 5, "!=", 5},
+		{"5 ** 2;", 5, "**", 2},
 		{"true == true", true, "==", true},
 		{"true != false", true, "!=", false},
 		{"false == false", false, "==", false},
@@ -494,113 +495,120 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 }
 
 func TestIfExpression(t *testing.T) {
-	input := `if (x < y) {x}`
-
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	checkParseErrors(t, p)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain %d statements, got=%d\n",
-			1, len(program.Statements))
+	tests := []string{
+		`if x < y {x}`,
 	}
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T",
-			program.Statements[0])
-	}
+	for _, input := range tests {
+		l := lexer.NewLexer(input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		checkParseErrors(t, p)
 
-	exp, ok := stmt.Expression.(*ast.IfExpression)
-	if !ok {
-		t.Fatalf("stmt.Expression is not ast.IfExpression, got=%T",
-			stmt.Expression)
-	}
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements, got=%d\n",
+				1, len(program.Statements))
+		}
 
-	if !checkInfixExpression(t, exp.Condition, "x", "<", "y") {
-		return
-	}
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T",
+				program.Statements[0])
+		}
 
-	if len(exp.Consequence.Statements) != 1 {
-		t.Errorf("consequence is not 1 statements, got=%d\n",
-			len(exp.Consequence.Statements))
-	}
+		exp, ok := stmt.Expression.(*ast.IfExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.IfExpression, got=%T",
+				stmt.Expression)
+		}
 
-	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("Statements[0] is not ast.ExpressionStatement, got=%T",
-			exp.Consequence.Statements[0])
-	}
-	if !checkIdentifier(t, consequence.Expression, "x") {
-		return
-	}
+		if !checkInfixExpression(t, exp.Condition, "x", "<", "y") {
+			return
+		}
 
-	if exp.Alternative != nil {
-		t.Errorf("exp.Alternative.Statements was not nil. got=%+v", exp.Alternative)
+		consequenceStmt := exp.Consequence
+
+		if len(consequenceStmt.Statements) != 1 {
+			t.Errorf("consequence is not 1 statements, got=%d\n",
+				len(consequenceStmt.Statements))
+		}
+
+		consequence, ok := consequenceStmt.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("Statements[0] is not ast.ExpressionStatement, got=%T",
+				consequenceStmt.Statements[0])
+		}
+		if !checkIdentifier(t, consequence.Expression, "x") {
+			return
+		}
+
+		if exp.Alternative != nil {
+			t.Errorf("exp.Alternative.Statements was not nil. got=%+v", exp.Alternative)
+		}
 	}
 }
 
 func TestIfElseExpression(t *testing.T) {
-	input := `if (x < y) {x} else {y}`
-
-	l := lexer.NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	checkParseErrors(t, p)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain %d statements, got=%d\n",
-			1, len(program.Statements))
+	tests := []string{
+		`if x < y {x} else {y}`,
 	}
 
-	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T",
-			program.Statements[0])
-	}
+	for _, input := range tests {
+		l := lexer.NewLexer(input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		checkParseErrors(t, p)
 
-	exp, ok := stmt.Expression.(*ast.IfExpression)
-	if !ok {
-		t.Fatalf("stmt.Expression is not ast.IfExpression, got=%T",
-			stmt.Expression)
-	}
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements, got=%d\n",
+				1, len(program.Statements))
+		}
 
-	if !checkInfixExpression(t, exp.Condition, "x", "<", "y") {
-		return
-	}
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement, got=%T",
+				program.Statements[0])
+		}
 
-	if len(exp.Consequence.Statements) != 1 {
-		t.Errorf("consequence is not 1 statements, got=%d\n",
-			len(exp.Consequence.Statements))
-	}
+		exp, ok := stmt.Expression.(*ast.IfExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.IfExpression, got=%T",
+				stmt.Expression)
+		}
 
-	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("Statements[0] is not ast.ExpressionStatement, got=%T",
-			exp.Consequence.Statements[0])
-	}
-	if !checkIdentifier(t, consequence.Expression, "x") {
-		return
-	}
+		if !checkInfixExpression(t, exp.Condition, "x", "<", "y") {
+			return
+		}
 
-	if len(exp.Consequence.Statements) != 1 {
-		t.Errorf("consequence is not 1 statements, got=%d\n",
-			len(exp.Consequence.Statements))
-	}
+		consequenceStmt := exp.Consequence
+		if len(consequenceStmt.Statements) != 1 {
+			t.Errorf("consequence is not 1 statements, got=%d\n",
+				len(consequenceStmt.Statements))
+		}
 
-	alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
-	if !ok {
-		t.Fatalf("Statements[0] is not ast.ExpressionStatement, got=%T",
-			exp.Alternative.Statements[0])
-	}
-	if !checkIdentifier(t, alternative.Expression, "y") {
-		return
+		consequence, ok := consequenceStmt.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("Statements[0] is not ast.ExpressionStatement, got=%T",
+				consequenceStmt.Statements[0])
+		}
+		if !checkIdentifier(t, consequence.Expression, "x") {
+			return
+		}
+
+		alternativeStmt := exp.Alternative
+		alternative, ok := alternativeStmt.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("Statements[0] is not ast.ExpressionStatement, got=%T",
+				alternativeStmt.Statements[0])
+		}
+		if !checkIdentifier(t, alternative.Expression, "y") {
+			return
+		}
 	}
 }
 
 func TestFunctionLiteral(t *testing.T) {
-	input := `fn(x, y) { x + y; }`
+	input := `|x, y| { x + y; }`
 
 	l := lexer.NewLexer(input)
 	p := NewParser(l)

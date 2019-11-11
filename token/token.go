@@ -21,11 +21,13 @@ const (
 	MINUS       = "-"
 	EXCLAMATION = "!"
 	ASTERISK    = "*"
+	EXP         = "**"
 	SLASH       = "/"
 	LT          = "<"
 	GT          = ">"
 	EQ          = "=="
 	NOT_EQ      = "!="
+	VERTICAL    = "|"
 
 	// Delimiters
 	COMMA     = ","
@@ -36,17 +38,15 @@ const (
 	RBRACE    = "}"
 
 	// Keywords
-	FUNCTION = "FUNCTION"
-	LET      = "LET"
-	TRUE     = "TRUE"
-	FALSE    = "FALSE"
-	IF       = "IF"
-	ELSE     = "ELSE"
-	RETURN   = "RETURN"
+	LET    = "LET"
+	TRUE   = "TRUE"
+	FALSE  = "FALSE"
+	IF     = "IF"
+	ELSE   = "ELSE"
+	RETURN = "RETURN"
 )
 
 var keywords = map[string]TokenType{
-	"fn":     FUNCTION,
 	"let":    LET,
 	"true":   TRUE,
 	"false":  FALSE,
