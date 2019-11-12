@@ -250,15 +250,15 @@ func TestErrorHandling(t *testing.T) {
 	}
 }
 
-func TestLetStatements(t *testing.T) {
+func TestAssignStatements(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected int64
 	}{
-		{"let a = 5; a;", 5},
-		{"let a = 5 * 5; a;", 25},
-		{"let a = 5; let b = a; b;", 5},
-		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+		{"a = 5; a;", 5},
+		{"a = 5 * 5; a;", 25},
+		{"a = 5; b = a; b;", 5},
+		{"a = 5; b = a; c = a + b + 5; c;", 15},
 	}
 	for _, tt := range tests {
 		evaluated := checkEval(tt.input)
@@ -294,11 +294,11 @@ func TestFunctionCall(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"let identity = |x| { x; }; identity(5);", 5},
-		{"let identity = |x| { return x; }; identity(5);", 5},
-		{"let double = |x| { x * 2; }; double(5);", 10},
-		{"let add = |x, y| { x + y; }; add(5, 5);", 10},
-		{"let add = |x, y| { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"identity = |x| { x; }; identity(5);", 5},
+		{"identity = |x| { return x; }; identity(5);", 5},
+		{"double = |x| { x * 2; }; double(5);", 10},
+		{"add = |x, y| { x + y; }; add(5, 5);", 10},
+		{"add = |x, y| { x + y; }; add(5 + 5, add(5, 5));", 20},
 		{"|x| { x; }(5)", 5},
 	}
 	for _, tt := range tests {
@@ -392,9 +392,9 @@ func TestBuiltinFunctions(t *testing.T) {
 
 func TestWhileStatement(t *testing.T) {
 	input := `
-	let x = 1;
+	x = 1;
 	while x < 10 {
-		let x = x + 1;
+		x = x + 1;
 	}
 	x;
 	`

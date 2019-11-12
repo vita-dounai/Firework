@@ -197,25 +197,23 @@ func (ce *CallExpression) String() string {
 	return out.String()
 }
 
-type LetStatement struct {
-	Token token.Token
+type AssignStatement struct {
 	Name  *Identifier
 	Value Expression
 }
 
-func (ls *LetStatement) statementNode() {}
-func (ls *LetStatement) TokenLiteral() string {
-	return ls.Token.Literal
+func (as *AssignStatement) statementNode() {}
+func (as *AssignStatement) TokenLiteral() string {
+	return ""
 }
-func (ls *LetStatement) String() string {
+func (as *AssignStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(ls.TokenLiteral() + " ")
-	out.WriteString(ls.Name.String())
+	out.WriteString(as.Name.String())
 	out.WriteString(" = ")
 
-	if ls.Value != nil {
-		out.WriteString(ls.Value.String())
+	if as.Value != nil {
+		out.WriteString(as.Value.String())
 	}
 
 	out.WriteString(";")

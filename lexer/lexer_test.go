@@ -7,14 +7,15 @@ import (
 )
 
 func TestNextToken(t *testing.T) {
-	input := `let five = 5;
-	let ten = 10;
+	input := `
+	five = 5;
+	ten = 10;
 	
-	let add = |x, y| {
+	add = |x, y| {
 		x + y;
 	};
 	
-	let result = add(five, ten);
+	result = add(five, ten);
 	!-/*5
 	5 < 10 > 5
 
@@ -40,17 +41,14 @@ func TestNextToken(t *testing.T) {
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
-		{token.LET, "let"},
 		{token.IDENTIFIER, "five"},
 		{token.ASSIGN, "="},
 		{token.INT, "5"},
 		{token.SEMICOLON, ";"},
-		{token.LET, "let"},
 		{token.IDENTIFIER, "ten"},
 		{token.ASSIGN, "="},
 		{token.INT, "10"},
 		{token.SEMICOLON, ";"},
-		{token.LET, "let"},
 		{token.IDENTIFIER, "add"},
 		{token.ASSIGN, "="},
 		{token.VERTICAL, "|"},
@@ -65,7 +63,6 @@ func TestNextToken(t *testing.T) {
 		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
 		{token.SEMICOLON, ";"},
-		{token.LET, "let"},
 		{token.IDENTIFIER, "result"},
 		{token.ASSIGN, "="},
 		{token.IDENTIFIER, "add"},

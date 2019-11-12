@@ -41,7 +41,6 @@ const (
 	RBRACE    = "}"
 
 	// Keywords
-	LET    = "LET"
 	TRUE   = "TRUE"
 	FALSE  = "FALSE"
 	IF     = "IF"
@@ -51,7 +50,6 @@ const (
 )
 
 var keywords = map[string]TokenType{
-	"let":    LET,
 	"true":   TRUE,
 	"false":  FALSE,
 	"if":     IF,

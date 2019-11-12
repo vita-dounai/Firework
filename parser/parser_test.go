@@ -8,24 +8,19 @@ import (
 	"github.com/vita-dounai/Firework/lexer"
 )
 
-func checkLetStatement(t *testing.T, statement ast.Statement, name string) bool {
-	if statement.TokenLiteral() != "let" {
-		t.Errorf("statement.TokenLiteral() is not 'let', got=%q", statement.TokenLiteral())
-		return false
-	}
-
-	letStatement, ok := statement.(*ast.LetStatement)
+func checkAssignStatement(t *testing.T, statement ast.Statement, name string) bool {
+	assignStatement, ok := statement.(*ast.AssignStatement)
 	if !ok {
-		t.Errorf("statement is not *ast.LetStatement, got=%T", statement)
+		t.Errorf("statement is not *ast.AssignStatement, got=%T", statement)
 		return false
 	}
 
-	if letStatement.Name.Value != name {
-		t.Errorf("letStatement.Name.Value is not '%s', got=%q", name, letStatement.Name.Value)
+	if assignStatement.Name.Value != name {
+		t.Errorf("assignStatement.Name.Value is not '%s', got=%q", name, assignStatement.Name.Value)
 	}
 
-	if letStatement.Name.TokenLiteral() != name {
-		t.Errorf("letStatement.Name.TokenLiteral is not '%s', got=%q", name, letStatement.Name)
+	if assignStatement.Name.TokenLiteral() != name {
+		t.Errorf("assignStatement.Name.TokenLiteral is not '%s', got=%q", name, assignStatement.Name)
 	}
 
 	return true
@@ -138,15 +133,15 @@ func checkParseErrors(t *testing.T, p *Parser) {
 	t.FailNow()
 }
 
-func TestLetStatement(t *testing.T) {
+func TestAssignStatement(t *testing.T) {
 	tests := []struct {
 		input              string
 		expectedIdentifier string
 		expectedValue      interface{}
 	}{
-		{"let x = 5;", "x", 5},
-		{"let y = true;", "y", true},
-		{"let foobar = y", "foobar", "y"},
+		{"x = 5;", "x", 5},
+		{"y = true;", "y", true},
+		{"foobar = y", "foobar", "y"},
 	}
 
 	for _, tt := range tests {
@@ -161,10 +156,10 @@ func TestLetStatement(t *testing.T) {
 		}
 
 		stmt := program.Statements[0]
-		if !checkLetStatement(t, stmt, tt.expectedIdentifier) {
+		if !checkAssignStatement(t, stmt, tt.expectedIdentifier) {
 			return
 		}
-		val := stmt.(*ast.LetStatement).Value
+		val := stmt.(*ast.AssignStatement).Value
 		if !checkLiteralExpression(t, val, tt.expectedValue) {
 			return
 		}
@@ -715,7 +710,7 @@ func TestCallExpression(t *testing.T) {
 func TestWhileStatement(t *testing.T) {
 	input := `
 	while x < 10 {
-		let x = x + 1;
+		x = x + 1;
 	}
 	`
 
@@ -746,9 +741,9 @@ func TestWhileStatement(t *testing.T) {
 			len(bodyStmt.Statements))
 	}
 
-	body, ok := bodyStmt.Statements[0].(*ast.LetStatement)
+	body, ok := bodyStmt.Statements[0].(*ast.AssignStatement)
 	if !ok {
-		t.Fatalf("Statements[0] is not ast.LetStatement, got=%T",
+		t.Fatalf("Statements[0] is not ast.AssignStatement, got=%T",
 			bodyStmt.Statements[0])
 	}
 

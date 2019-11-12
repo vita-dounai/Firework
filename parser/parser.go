@@ -115,8 +115,12 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
-	case token.LET:
-		return p.parseLetStatement()
+	case token.IDENTIFIER:
+		if p.peekTokenIs(token.ASSIGN) {
+			return p.parseAssignStatement()
+		} else {
+			return p.parseExpressionStatement()
+		}
 	case token.RETURN:
 		return p.parseReturnStatement()
 	case token.WHILE:
@@ -126,12 +130,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 }
 
-func (p *Parser) parseLetStatement() *ast.LetStatement {
-	statement := &ast.LetStatement{Token: p.curToken}
-
-	if !p.expectPeek(token.IDENTIFIER) {
-		return nil
-	}
+func (p *Parser) parseAssignStatement() *ast.AssignStatement {
+	statement := &ast.AssignStatement{}
 
 	statement.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
