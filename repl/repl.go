@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/vita-dounai/Firework/evaluator"
 	"github.com/vita-dounai/Firework/lexer"
@@ -25,9 +26,20 @@ func Start(in io.Reader, out io.Writer) {
 		}
 
 		line := scanner.Text()
+		if strings.HasPrefix(line, ".") {
+			command := line[1:]
+
+			switch command {
+			case "exit":
+				return
+			default:
+				io.WriteString(out, fmt.Sprintf("Unknown command: %s\n", command))
+				continue
+			}
+		}
+
 		l := lexer.NewLexer(line)
 		p := parser.NewParser(l)
-
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
 			printParserErrors(out, p.Errors())
