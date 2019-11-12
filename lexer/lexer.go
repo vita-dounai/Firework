@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"bytes"
+
 	"github.com/vita-dounai/Firework/token"
 )
 
@@ -48,6 +50,33 @@ func (l *Lexer) readNumber() string {
 		l.readChar()
 	}
 	return l.Input[position:l.Position]
+}
+
+func (l *Lexer) readString() string {
+	var str bytes.Buffer
+	for {
+		l.readChar()
+		if l.Ch == '\\' {
+			l.readChar()
+			switch l.Ch {
+			case 'n':
+				str.WriteByte('\n')
+			case 't':
+				str.WriteByte('\t')
+			case '"':
+				str.WriteByte('"')
+			default:
+				str.Write([]byte{'\\', l.Ch})
+			}
+		} else {
+			if l.Ch == '"' {
+				break
+			}
+
+			str.WriteByte(l.Ch)
+		}
+	}
+	return str.String()
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -134,6 +163,9 @@ func (l *Lexer) NextToken() token.Token {
 		}
 	case '|':
 		tok = newToken(token.VERTICAL, l.Ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
 	case 0:
 		tok = token.Token{Type: token.EOF, Literal: ""}
 	default:

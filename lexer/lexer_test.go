@@ -26,6 +26,12 @@ func TestNextToken(t *testing.T) {
 
 	5 == 5
 	5 != 10
+
+	"foobar"
+	"foo bar"
+	"foo\nbar"
+	"foo\tbar"
+	"foo\"bar"
 	`
 
 	tests := []struct {
@@ -100,6 +106,11 @@ func TestNextToken(t *testing.T) {
 		{token.INT, "5"},
 		{token.NOT_EQ, "!="},
 		{token.INT, "10"},
+		{token.STRING, "foobar"},
+		{token.STRING, "foo bar"},
+		{token.STRING, "foo\nbar"},
+		{token.STRING, "foo\tbar"},
+		{token.STRING, "foo\"bar"},
 		{token.EOF, ""},
 	}
 

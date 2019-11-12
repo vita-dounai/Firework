@@ -231,7 +231,7 @@ func TestIdentifierExpression(t *testing.T) {
 	}
 }
 
-func TestIntegerLiteralExpression(t *testing.T) {
+func TestIntegerLiteral(t *testing.T) {
 	input := "5;"
 
 	l := lexer.NewLexer(input)
@@ -261,14 +261,14 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	}
 }
 
-func TestBooleanExpression(t *testing.T) {
+func TestBoolean(t *testing.T) {
 	input := `
 	true;
 	false;
 	`
 
-	lexer := lexer.NewLexer(input)
-	p := NewParser(lexer)
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
 	program := p.ParseProgram()
 	checkParseErrors(t, p)
 
@@ -292,6 +292,24 @@ func TestBooleanExpression(t *testing.T) {
 		}
 
 		checkBooleanLiteral(t, stmt.Expression, expected.expectedBoolean)
+	}
+}
+
+func TestStringLiteral(t *testing.T) {
+	input := `"Hello, world";`
+
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	literal, ok := stmt.Expression.(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("exp not *ast.StringLiteral, got=%T", stmt.Expression)
+	}
+	if literal.Value != "Hello, world" {
+		t.Errorf("literal.Value not %q, got=%q", "Hello, world", literal.Value)
 	}
 }
 
