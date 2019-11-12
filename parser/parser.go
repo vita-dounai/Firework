@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"runtime/debug"
 	"strconv"
 
 	"github.com/vita-dounai/Firework/ast"
@@ -177,7 +176,6 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	debug.PrintStack()
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
 }
