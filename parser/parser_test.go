@@ -711,3 +711,52 @@ func TestCallExpression(t *testing.T) {
 	checkInfixExpression(t, exp.Arguments[1], 2, "*", 3)
 	checkInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }
+
+func TestWhileStatement(t *testing.T) {
+	input := `
+	while x < 10 {
+		let x = x + 1;
+	}
+	`
+
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain %d statements, got=%d\n",
+			1, len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.WhileStatement)
+	if !ok {
+		t.Fatalf("stmt is not ast.WhileStatement, got=%T",
+			program.Statements[0])
+	}
+
+	if !checkInfixExpression(t, stmt.Condition, "x", "<", 10) {
+		return
+	}
+
+	bodyStmt := stmt.Body
+
+	if len(bodyStmt.Statements) != 1 {
+		t.Errorf("body is not 1 statements, got=%d\n",
+			len(bodyStmt.Statements))
+	}
+
+	body, ok := bodyStmt.Statements[0].(*ast.LetStatement)
+	if !ok {
+		t.Fatalf("Statements[0] is not ast.LetStatement, got=%T",
+			bodyStmt.Statements[0])
+	}
+
+	if !checkLiteralExpression(t, body.Name, "x") {
+		return
+	}
+
+	if !checkInfixExpression(t, body.Value, "x", "+", 1) {
+		return
+	}
+}

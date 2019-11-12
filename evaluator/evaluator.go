@@ -336,6 +336,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		return applyFunction(function, args)
+	case *ast.WhileStatement:
+		for isTruthy(Eval(node.Condition, env)) {
+			Eval(node.Body, env)
+		}
 	}
 
 	return nil

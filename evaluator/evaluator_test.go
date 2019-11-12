@@ -389,3 +389,18 @@ func TestBuiltinFunctions(t *testing.T) {
 		}
 	}
 }
+
+func TestWhileStatement(t *testing.T) {
+	input := `
+	let x = 1;
+	while x < 10 {
+		let x = x + 1;
+	}
+	x;
+	`
+
+	evaluated := checkEval(input)
+	if !checkIntegerObject(t, evaluated, 10) {
+		return
+	}
+}
