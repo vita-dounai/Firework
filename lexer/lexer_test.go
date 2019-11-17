@@ -9,6 +9,8 @@ import (
 func TestNextToken(t *testing.T) {
 	input := `
 	five = 5;
+	add2
+	add_2
 	ten = 10;
 	
 	add = |x, y| {
@@ -46,6 +48,8 @@ func TestNextToken(t *testing.T) {
 		{token.ASSIGN, "="},
 		{token.INT, "5"},
 		{token.SEMICOLON, ";"},
+		{token.IDENTIFIER, "add2"},
+		{token.IDENTIFIER, "add_2"},
 		{token.IDENTIFIER, "ten"},
 		{token.ASSIGN, "="},
 		{token.INT, "10"},

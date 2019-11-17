@@ -38,7 +38,8 @@ func (l *Lexer) peekChar() byte {
 
 func (l *Lexer) readIdentifier() string {
 	position := l.Position
-	for isLetter(l.Ch) {
+	l.readChar()
+	for isLetter(l.Ch) || isDigit(l.Ch) || l.Ch == '_' {
 		l.readChar()
 	}
 	return l.Input[position:l.Position]
@@ -173,7 +174,7 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok = token.Token{Type: token.EOF, Literal: ""}
 	default:
-		if isLetter(l.Ch) {
+		if isLetter(l.Ch) || l.Ch == '_' {
 			identifier := l.readIdentifier()
 			tok = token.Token{Type: token.LookupIdentifier(identifier), Literal: identifier}
 			return tok
