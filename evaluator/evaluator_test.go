@@ -283,7 +283,7 @@ func TestFunctionObject(t *testing.T) {
 		t.Fatalf("parameter is not 'x', got=%q", fn.Parameters[0])
 	}
 
-	expectedBody := "(x + 2)"
+	expectedBody := "{\n    (x + 2);\n}"
 	if fn.Body.String() != expectedBody {
 		t.Fatalf("body is not %q, got=%q", expectedBody, fn.Body.String())
 	}
@@ -367,6 +367,7 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("hello world")`, 11},
 		{`len(1)`, "argument to `len` not supported, got INTEGER"},
 		{`len("one", "two")`, "wrong number of arguments, got=2, want=1"},
+		{`len([1, 2, 3])`, 3},
 	}
 
 	for _, tt := range tests {
@@ -402,5 +403,79 @@ func TestWhileStatement(t *testing.T) {
 	evaluated := checkEval(input)
 	if !checkIntegerObject(t, evaluated, 10) {
 		return
+	}
+}
+
+func TestArrayLiterals(t *testing.T) {
+	input := "[1, 2 * 2, 3 + 3]"
+	evaluated := checkEval(input)
+
+	result, ok := evaluated.(*object.Array)
+	if !ok {
+		t.Fatalf("object is not Array. got=%T (%+v)", evaluated, evaluated)
+	}
+	if len(result.Elements) != 3 {
+		t.Fatalf("array has wrong num of elements. got=%d",
+			len(result.Elements))
+	}
+	checkIntegerObject(t, result.Elements[0], 1)
+	checkIntegerObject(t, result.Elements[1], 4)
+	checkIntegerObject(t, result.Elements[2], 6)
+}
+
+func TestArrayIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{
+			"[1, 2, 3][0]",
+			1,
+		},
+		{
+			"[1, 2, 3][1]",
+			2,
+		},
+		{
+			"[1, 2, 3][2]",
+			3,
+		},
+		{
+			"i = 0; [1][i];",
+			1,
+		},
+		{
+			"[1, 2, 3][1 + 1];",
+			3,
+		},
+		{
+			"myArray = [1, 2, 3]; myArray[2];",
+			3,
+		},
+		{
+			"myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+			6,
+		},
+		{
+			"myArray = [1, 2, 3]; i = myArray[0]; myArray[i]",
+			2,
+		},
+		{
+			"[1, 2, 3][3]",
+			nil,
+		},
+		{
+			"[1, 2, 3][-1]",
+			nil,
+		},
+	}
+	for _, tt := range tests {
+		evaluated := checkEval(tt.input)
+		integer, ok := tt.expected.(int)
+		if ok {
+			checkIntegerObject(t, evaluated, int64(integer))
+		} else {
+			checkNullObject(t, evaluated)
+		}
 	}
 }

@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/vita-dounai/Firework/ast"
@@ -19,10 +18,6 @@ func checkAssignStatement(t *testing.T, statement ast.Statement, name string) bo
 		t.Errorf("assignStatement.Name.Value is not '%s', got=%q", name, assignStatement.Name.Value)
 	}
 
-	if assignStatement.Name.TokenLiteral() != name {
-		t.Errorf("assignStatement.Name.TokenLiteral is not '%s', got=%q", name, assignStatement.Name)
-	}
-
 	return true
 }
 
@@ -35,11 +30,6 @@ func checkIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 
 	if integer.Value != value {
 		t.Errorf("integer.Value is not %d, got=%d", value, integer.Value)
-		return false
-	}
-
-	if integer.TokenLiteral() != fmt.Sprintf("%d", value) {
-		t.Errorf("integer.TokenLiteral not %d, got=%s", value, integer.TokenLiteral())
 		return false
 	}
 
@@ -70,11 +60,6 @@ func checkIdentifier(t *testing.T, expression ast.Expression, value string) bool
 
 	if identifier.Value != value {
 		t.Errorf("identifier.Value is not %s, got=%s", value, identifier.Value)
-		return false
-	}
-
-	if identifier.TokenLiteral() != value {
-		t.Errorf("identifier.TokenLiteral is not %s, got=%s", value, identifier.TokenLiteral())
 		return false
 	}
 
@@ -173,6 +158,12 @@ func TestReturnStatements(t *testing.T) {
 	return 10086;
 	`
 
+	expected := []int64{
+		5,
+		10,
+		10086,
+	}
+
 	l := lexer.NewLexer(input)
 	p := NewParser(l)
 
@@ -183,15 +174,13 @@ func TestReturnStatements(t *testing.T) {
 		t.Fatalf("program.Statements does not contain 3 statements, got=%d", len(program.Statements))
 	}
 
-	for _, statement := range program.Statements {
+	for i, statement := range program.Statements {
 		returnStatement, ok := statement.(*ast.ReturnStatement)
 		if !ok {
 			t.Errorf("statement is not *ast.returnStatement, got=%T", statement)
 		}
 
-		if returnStatement.TokenLiteral() != "return" {
-			t.Errorf("returnStatement.TokenLiteral() is not 'return', got %q", returnStatement.TokenLiteral())
-		}
+		checkIntegerLiteral(t, returnStatement.ReturnValue, expected[i])
 	}
 }
 
@@ -220,10 +209,6 @@ func TestIdentifierExpression(t *testing.T) {
 	if identifier.Value != "foobar" {
 		t.Errorf("identifier.Value is not foobar, got=%s", identifier.Value)
 	}
-
-	if identifier.TokenLiteral() != "foobar" {
-		t.Errorf("identifier.TokenLiteral is not foobar, got=%s", identifier.TokenLiteral())
-	}
 }
 
 func TestIntegerLiteral(t *testing.T) {
@@ -249,10 +234,6 @@ func TestIntegerLiteral(t *testing.T) {
 	}
 	if literal.Value != 5 {
 		t.Errorf("literal.Value not %d. got=%d", 5, literal.Value)
-	}
-	if literal.TokenLiteral() != "5" {
-		t.Errorf("literal.TokenLiteral not %s. got=%s", "5",
-			literal.TokenLiteral())
 	}
 }
 
@@ -398,103 +379,111 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}{
 		{
 			"-a * b",
-			"((-a) * b)",
+			"((-a) * b);",
 		},
 		{
 			"!-a",
-			"(!(-a))",
+			"(!(-a));",
 		},
 		{
 			"a + b + c",
-			"((a + b) + c)",
+			"((a + b) + c);",
 		},
 		{
 			"a + b - c",
-			"((a + b) - c)",
+			"((a + b) - c);",
 		},
 		{
 			"a * b * c",
-			"((a * b) * c)",
+			"((a * b) * c);",
 		},
 		{
 			"a * b / c",
-			"((a * b) / c)",
+			"((a * b) / c);",
 		},
 		{
 			"a + b / c",
-			"(a + (b / c))",
+			"(a + (b / c));",
 		},
 		{
 			"a + b * c + d / e - f",
-			"(((a + (b * c)) + (d / e)) - f)",
+			"(((a + (b * c)) + (d / e)) - f);",
 		},
 		{
-			"3 + 4; -5 * 5",
-			"(3 + 4)((-5) * 5)",
+			"-5 * 5",
+			"((-5) * 5);",
 		},
 		{
 			"5 > 4 == 3 < 4",
-			"((5 > 4) == (3 < 4))",
+			"((5 > 4) == (3 < 4));",
 		},
 		{
 			"5 < 4 != 3 > 4",
-			"((5 < 4) != (3 > 4))",
+			"((5 < 4) != (3 > 4));",
 		},
 		{
 			"3 + 4 * 5 == 3 * 1 + 4 * 5",
-			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)));",
 		},
 		{
 			"3 + 4 * 5 == 3 * 1 + 4 * 5",
-			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)));",
 		},
 		{
 			"true",
-			"true",
+			"true;",
 		},
 		{
 			"false",
-			"false",
+			"false;",
 		},
 		{
 			"3 > 5 == false",
-			"((3 > 5) == false)",
+			"((3 > 5) == false);",
 		},
 		{
 			"3 < 5 == true",
-			"((3 < 5) == true)",
+			"((3 < 5) == true);",
 		},
 		{
 			"1 + (2 + 3) + 4",
-			"((1 + (2 + 3)) + 4)",
+			"((1 + (2 + 3)) + 4);",
 		},
 		{
 			"(5 + 5) * 2",
-			"((5 + 5) * 2)",
+			"((5 + 5) * 2);",
 		},
 		{
 			"2 / (5 + 5)",
-			"(2 / (5 + 5))",
+			"(2 / (5 + 5));",
 		},
 		{
 			"-(5 + 5)",
-			"(-(5 + 5))",
+			"(-(5 + 5));",
 		},
 		{
 			"!(true == true)",
-			"(!(true == true))",
+			"(!(true == true));",
 		},
 		{
 			"a + add(b * c) + d",
-			"((a + add((b * c))) + d)",
+			"((a + add((b * c))) + d);",
 		},
 		{
 			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
-			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)));",
 		},
 		{
 			"add(a + b + c * d / f + g)",
-			"add((((a + b) + ((c * d) / f)) + g))",
+			"add((((a + b) + ((c * d) / f)) + g));",
+		},
+		{
+			"a * [1, 2, 3, 4][b * c] * d",
+			"((a * ([1, 2, 3, 4][(b * c)])) * d);",
+		},
+		{
+			"add(a * b[2], b[1], 2 * [1, 2][1])",
+			"add((a * (b[2])), (b[1]), (2 * ([1, 2][1])));",
 		},
 	}
 	for _, tt := range tests {
@@ -752,6 +741,48 @@ func TestWhileStatement(t *testing.T) {
 	}
 
 	if !checkInfixExpression(t, body.Value, "x", "+", 1) {
+		return
+	}
+}
+
+func TestParsingArrayLiterals(t *testing.T) {
+	input := "[1, 2 * 2, 3 + 3]"
+
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	array, ok := stmt.Expression.(*ast.ArrayLiteral)
+	if !ok {
+		t.Fatalf("exp is not ast.ArrayLiteral, got=%T", stmt.Expression)
+	}
+	if len(array.Elements) != 3 {
+		t.Fatalf("len(array.Elements) not 3, got=%d", len(array.Elements))
+	}
+
+	checkIntegerLiteral(t, array.Elements[0], 1)
+	checkInfixExpression(t, array.Elements[1], 2, "*", 2)
+	checkInfixExpression(t, array.Elements[2], 3, "+", 3)
+}
+
+func TestParsingIndexExpressions(t *testing.T) {
+	input := "myArray[1 + 1]"
+	l := lexer.NewLexer(input)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	indexExp, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.IndexExpression. got=%T", stmt.Expression)
+	}
+	if !checkIdentifier(t, indexExp.Left, "myArray") {
+		return
+	}
+	if !checkInfixExpression(t, indexExp.Index, 1, "+", 1) {
 		return
 	}
 }

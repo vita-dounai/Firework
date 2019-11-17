@@ -268,6 +268,17 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 	}
 }
 
+func evalIndexExpression(arrayObject, indexObject object.Object) object.Object {
+	array := arrayObject.(*object.Array)
+	index := indexObject.(*object.Integer).Value
+
+	if index < 0 || index >= int64(len(array.Elements)) {
+		return NULL
+	}
+
+	return array.Elements[index]
+}
+
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
@@ -340,6 +351,33 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		for isTruthy(Eval(node.Condition, env)) {
 			Eval(node.Body, env)
 		}
+	case *ast.ArrayLiteral:
+		elements := evalExpressions(node.Elements, env)
+		if len(elements) == 1 && isError(elements[0]) {
+			return elements[0]
+		}
+
+		return &object.Array{Elements: elements}
+	case *ast.IndexExpression:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+
+		if left.Type() != object.ARRAY_OBJ {
+			return newError("index operator not support: %s", left.Type())
+		}
+
+		index := Eval(node.Index, env)
+		if isError(index) {
+			return index
+		}
+
+		if index.Type() != object.INTEGER_OBJ {
+			return newError("subscript not support: %s", index.Type())
+		}
+
+		return evalIndexExpression(left, index)
 	}
 
 	return nil

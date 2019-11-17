@@ -1,18 +1,17 @@
 package ast
 
-import "testing"
-import "github.com/vita-dounai/Firework/token"
+import (
+	"testing"
+)
 
 func TestString(t *testing.T) {
 	program := &Program{
 		Statements: []Statement{
 			&AssignStatement{
 				Name: &Identifier{
-					Token: token.Token{Type: token.IDENTIFIER, Literal: "myVar"},
 					Value: "myVar",
 				},
 				Value: &Identifier{
-					Token: token.Token{Type: token.IDENTIFIER, Literal: "anotherVar"},
 					Value: "anotherVar",
 				},
 			},

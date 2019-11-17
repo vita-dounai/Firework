@@ -35,6 +35,7 @@ func TestNextToken(t *testing.T) {
 	"foo\"bar"
 
 	while x < 2 {}
+	[1, 2];
 	`
 
 	tests := []struct {
@@ -114,6 +115,12 @@ func TestNextToken(t *testing.T) {
 		{token.INT, "2"},
 		{token.LBRACE, "{"},
 		{token.RBRACE, "}"},
+		{token.LBRACKET, "["},
+		{token.INT, "1"},
+		{token.COMMA, ","},
+		{token.INT, "2"},
+		{token.RBRACKET, "]"},
+		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}
 

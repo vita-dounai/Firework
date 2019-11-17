@@ -19,6 +19,7 @@ const (
 	FUNCTION_OBJ     = "FUNCTION"
 	STRING_OBJ       = "STRING"
 	BUILTIN_OBJ      = "BUILTIN"
+	ARRAY_OBJ        = "ARRAY"
 )
 
 type Object interface {
@@ -73,9 +74,9 @@ func (f *Function) Inspect() string {
 		parameters = append(parameters, p.String())
 	}
 
-	out.WriteString("fn(")
+	out.WriteString("|")
 	out.WriteString(strings.Join(parameters, ", "))
-	out.WriteString(")")
+	out.WriteString("| ")
 	out.WriteString(f.Body.String())
 
 	return out.String()
@@ -88,7 +89,7 @@ type String struct {
 	Value string
 }
 
-func (s *String) Inspect() string  { return s.Value }
+func (s *String) Inspect() string  { return "\"" + s.Value + "\"" }
 func (s *String) Type() ObjectType { return STRING_OBJ }
 
 type BuiltFunction func(args ...Object) Object
@@ -99,3 +100,23 @@ type Builtin struct {
 
 func (b *Builtin) Inspect() string  { return "builtin function" }
 func (b *Builtin) Type() ObjectType { return BUILTIN_OBJ }
+
+type Array struct {
+	Elements []Object
+}
+
+func (a *Array) Inspect() string {
+	var out bytes.Buffer
+
+	elements := []string{}
+	for _, e := range a.Elements {
+		elements = append(elements, e.Inspect())
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
+
+	return out.String()
+}
+func (a *Array) Type() ObjectType { return ARRAY_OBJ }
