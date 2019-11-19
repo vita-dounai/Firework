@@ -346,8 +346,15 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 		return applyFunction(function, args)
 	case *ast.WhileStatement:
-		for isTruthy(Eval(node.Condition, env)) {
-			Eval(node.Body, env)
+		condition := Eval(node.Condition, env)
+		if isError(condition) {
+			return condition
+		}
+		for isTruthy(condition) {
+			body := Eval(node.Body, env)
+			if isError(body) {
+				return body
+			}
 		}
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
