@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"fmt"
-	"runtime/debug"
 	"strconv"
 
 	"github.com/vita-dounai/Firework/ast"
@@ -50,12 +48,24 @@ type Parser struct {
 	curToken  token.Token
 	peekToken token.Token
 
-	errors []string
+	errors []ParseError
 
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
 
 	ident int
+}
+
+func (p *Parser) Init(l *lexer.Lexer) {
+	p.l = l
+
+	// Set parser.curToken to first token in lexer
+	p.nextToken()
+	p.nextToken()
+
+	// Remove all previous parsing errors
+	p.errors = p.errors[0:0]
+	p.ident = 0
 }
 
 func (p *Parser) nextToken() {
@@ -94,15 +104,33 @@ func (p *Parser) peekPrecedence() int {
 	return LOWEST
 }
 
-func (p *Parser) Errors() []string {
+func (p *Parser) Errors() []ParseError {
 	return p.errors
 }
 
-func (p *Parser) peekError(tokenType token.TokenType) {
-	debug.PrintStack()
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead", tokenType, p.peekToken.Type)
+func (p *Parser) Ident() int {
+	return p.ident
+}
 
-	p.errors = append(p.errors, msg)
+func (p *Parser) checkUnexpectedEOF() bool {
+	length := len(p.errors)
+	if length >= 1 {
+		if p.errors[length-1] == UNEXPECTED_EOF {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *Parser) peekError(tokenType token.TokenType) {
+	if p.peekTokenIs(token.EOF) {
+		if !p.checkUnexpectedEOF() {
+			p.errors = append(p.errors, UNEXPECTED_EOF)
+		}
+	} else {
+		p.errors = append(p.errors, &IllegalSyntax{Expected: tokenType, Got: p.peekToken.Type})
+	}
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -200,8 +228,16 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
-	p.errors = append(p.errors, msg)
+	switch p.curToken.Type {
+	case token.EOF:
+		if !p.checkUnexpectedEOF() {
+			p.errors = append(p.errors, UNEXPECTED_EOF)
+		}
+	case token.ILLEGAL:
+		p.errors = append(p.errors, &IllegalSymbol{p.curToken.Literal})
+	default:
+		p.errors = append(p.errors, &NoPrefixFunction{Token: t})
+	}
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
@@ -263,6 +299,9 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 
 	for !p.curTokenIs(token.RBRACE) {
 		if p.curTokenIs(token.EOF) {
+			if !p.checkUnexpectedEOF() {
+				p.errors = append(p.errors, UNEXPECTED_EOF)
+			}
 			return nil
 		}
 
@@ -282,8 +321,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	if err != nil {
-		msg := fmt.Sprintf("counld not parse %q as integer", p.curToken.Literal)
-		p.errors = append(p.errors, msg)
+		p.errors = append(p.errors, &IllegalInteger{Literal: p.curToken.Literal})
 		return nil
 	}
 
@@ -430,11 +468,8 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
 
-func NewParser(l *lexer.Lexer) *Parser {
-	parser := &Parser{l: l, errors: []string{}, ident: 0}
-
-	parser.nextToken()
-	parser.nextToken()
+func NewParser() *Parser {
+	parser := &Parser{l: nil, errors: []ParseError{}, ident: 0}
 
 	parser.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	parser.registerPrefix(token.IDENTIFIER, parser.parseIdentifier)

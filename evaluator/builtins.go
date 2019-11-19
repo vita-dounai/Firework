@@ -11,7 +11,7 @@ var builtins = map[string]*object.Builtin{
 	"len": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 {
-				return newError("wrong number of arguments, got=%d, want=1", len(args))
+				return newError("Wrong number of arguments, got=%d, want=1", len(args))
 			}
 
 			switch arg := args[0].(type) {
@@ -20,7 +20,7 @@ var builtins = map[string]*object.Builtin{
 			case *object.Array:
 				return &object.Integer{Value: int64(len(arg.Elements))}
 			default:
-				return newError("argument to `len` not supported, got %s",
+				return newError("Argument to `len` not supported, got %s",
 					arg.Type())
 			}
 		},
@@ -28,7 +28,7 @@ var builtins = map[string]*object.Builtin{
 	"first": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 || args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `first` must be ARRAY, got %s", args[0].Type())
+				return newError("Argument to `first` must be ARRAY, got %s", args[0].Type())
 			}
 
 			array := args[0].(*object.Array)
@@ -42,7 +42,7 @@ var builtins = map[string]*object.Builtin{
 	"last": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 || args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `last` must be ARRAY, got %s", args[0].Type())
+				return newError("Argument to `last` must be ARRAY, got %s", args[0].Type())
 			}
 
 			array := args[0].(*object.Array)
@@ -57,7 +57,7 @@ var builtins = map[string]*object.Builtin{
 	"rest": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 1 || args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `rest` must be ARRAY, got %s", args[0].Type())
+				return newError("Argument to `rest` must be ARRAY, got %s", args[0].Type())
 			}
 
 			array := args[0].(*object.Array)
@@ -74,7 +74,7 @@ var builtins = map[string]*object.Builtin{
 	"push": &object.Builtin{
 		Fn: func(args ...object.Object) object.Object {
 			if len(args) != 2 || args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `push` must be ARRAY, got %s", args[0].Type())
+				return newError("Argument to `push` must be ARRAY, got %s", args[0].Type())
 			}
 
 			array := args[0].(*object.Array)
@@ -92,8 +92,7 @@ var builtins = map[string]*object.Builtin{
 			for i, arg := range args {
 				var inspect string
 
-				_, ok := arg.(*object.String)
-				if ok {
+				if _, ok := arg.(*object.String); ok {
 					inspect = strings.Trim(arg.Inspect(), "\"")
 				} else {
 					inspect = arg.Inspect()

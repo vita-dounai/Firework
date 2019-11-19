@@ -60,7 +60,7 @@ func evalExclamationOperatorExpression(right object.Object) object.Object {
 
 func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 	if right.Type() != object.INTEGER_OBJ {
-		return newError("unknown operator: -%s", right.Type())
+		return newError("Unknown operator: -%s", right.Type())
 	}
 
 	value := right.(*object.Integer).Value
@@ -75,7 +75,7 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	case "-":
 		return evalMinusPrefixOperatorExpression(right)
 	default:
-		return newError("unknown operator: %s%s", operator, right.Type())
+		return newError("Unknown operator: %s%s", operator, right.Type())
 	}
 }
 
@@ -115,7 +115,7 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	case "!=":
 		return nativeBoolToBooleanObject(leftValue != rightValue)
 	default:
-		return newError("unknown operator: %s %s  %s", left.Type(), operator, right.Type())
+		return newError("Unknown operator: %s %s  %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -135,7 +135,7 @@ func evalStringInfixExpression(operator string, left, right object.Object) objec
 	case "!=":
 		return nativeBoolToBooleanObject(strings.Compare(leftValue, rightValue) != 0)
 	default:
-		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+		return newError("Unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -152,9 +152,9 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	default:
 		switch {
 		case left.Type() != right.Type():
-			return newError("type mismatch: %s %s %s", left.Type(), operator, right.Type())
+			return newError("Type mismatch: %s %s %s", left.Type(), operator, right.Type())
 		default:
-			return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+			return newError("Unknown operator: %s %s %s", left.Type(), operator, right.Type())
 		}
 	}
 }
@@ -210,17 +210,15 @@ func isError(obj object.Object) bool {
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
-	value, ok := env.Get(node.Value)
-	if ok {
+	if value, ok := env.Get(node.Value); ok {
 		return value
 	}
 
-	builtin, ok := builtins[node.Value]
-	if ok {
+	if builtin, ok := builtins[node.Value]; ok {
 		return builtin
 	}
 
-	return newError("identifier not found: " + node.Value)
+	return newError("Identifier not found: " + node.Value)
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
@@ -264,7 +262,7 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 	case *object.Builtin:
 		return function.Fn(args...)
 	default:
-		return newError("not a function: %s", fn.Type())
+		return newError("Not a function: %s", fn.Type())
 	}
 }
 
@@ -365,7 +363,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		if left.Type() != object.ARRAY_OBJ {
-			return newError("index operator not support: %s", left.Type())
+			return newError("Index operator not support: %s", left.Type())
 		}
 
 		index := Eval(node.Index, env)
@@ -374,7 +372,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 
 		if index.Type() != object.INTEGER_OBJ {
-			return newError("subscript not support: %s", index.Type())
+			return newError("Subscript not support: %s", index.Type())
 		}
 
 		return evalIndexExpression(left, index)

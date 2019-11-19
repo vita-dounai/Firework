@@ -42,7 +42,8 @@ func checkBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 
 func checkEval(input string) object.Object {
 	l := lexer.NewLexer(input)
-	p := parser.NewParser(l)
+	p := parser.NewParser()
+	p.Init(l)
 	program := p.ParseProgram()
 	env := object.NewEnvironment()
 
@@ -147,8 +148,7 @@ func TestIfElseExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated := checkEval(tt.input)
-		integer, ok := tt.expected.(int)
-		if ok {
+		if integer, ok := tt.expected.(int); ok {
 			checkIntegerObject(t, evaluated, int64(integer))
 		} else {
 			checkNullObject(t, evaluated)
@@ -190,27 +190,27 @@ func TestErrorHandling(t *testing.T) {
 	}{
 		{
 			"5 + true;",
-			"type mismatch: INTEGER + BOOLEAN",
+			"Type mismatch: INTEGER + BOOLEAN",
 		},
 		{
 			"5 + true; 5;",
-			"type mismatch: INTEGER + BOOLEAN",
+			"Type mismatch: INTEGER + BOOLEAN",
 		},
 		{
 			"-true",
-			"unknown operator: -BOOLEAN",
+			"Unknown operator: -BOOLEAN",
 		},
 		{
 			"true + false;",
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"Unknown operator: BOOLEAN + BOOLEAN",
 		},
 		{
 			"5; true + false; 5",
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"Unknown operator: BOOLEAN + BOOLEAN",
 		},
 		{
 			"if (10 > 1) { true + false; }",
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"Unknown operator: BOOLEAN + BOOLEAN",
 		},
 		{
 			`
@@ -221,15 +221,15 @@ func TestErrorHandling(t *testing.T) {
 					return 1;
 				}
 			`,
-			"unknown operator: BOOLEAN + BOOLEAN",
+			"Unknown operator: BOOLEAN + BOOLEAN",
 		},
 		{
 			"foobar",
-			"identifier not found: foobar",
+			"Identifier not found: foobar",
 		},
 		{
 			`"Hello" - "world"`,
-			"unknown operator: STRING - STRING",
+			"Unknown operator: STRING - STRING",
 		},
 	}
 
@@ -365,8 +365,8 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("")`, 0},
 		{`len("four")`, 4},
 		{`len("hello world")`, 11},
-		{`len(1)`, "argument to `len` not supported, got INTEGER"},
-		{`len("one", "two")`, "wrong number of arguments, got=2, want=1"},
+		{`len(1)`, "Argument to `len` not supported, got INTEGER"},
+		{`len("one", "two")`, "Wrong number of arguments, got=2, want=1"},
 		{`len([1, 2, 3])`, 3},
 	}
 
@@ -471,8 +471,8 @@ func TestArrayIndexExpressions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		evaluated := checkEval(tt.input)
-		integer, ok := tt.expected.(int)
-		if ok {
+
+		if integer, ok := tt.expected.(int); ok {
 			checkIntegerObject(t, evaluated, int64(integer))
 		} else {
 			checkNullObject(t, evaluated)
