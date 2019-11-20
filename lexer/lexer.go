@@ -168,6 +168,8 @@ func (l *Lexer) NextToken() token.Token {
 		}
 	case '|':
 		tok = newToken(token.VERTICAL, l.Ch)
+	case '%':
+		tok = newToken(token.PERCENT, l.Ch)
 	case '"':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()

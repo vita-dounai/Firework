@@ -113,7 +113,7 @@ func checkParseErrors(t *testing.T, p *Parser) {
 
 	t.Errorf("parser has %d errors", len(errors))
 	for _, msg := range errors {
-		t.Errorf("parser error: %q", msg)
+		t.Errorf("parser error: %q", msg.Info())
 	}
 	t.FailNow()
 }
@@ -359,6 +359,7 @@ func TestInfixExpressions(t *testing.T) {
 		{"true == true", true, "==", true},
 		{"true != false", true, "!=", false},
 		{"false == false", false, "==", false},
+		{"10 % 3", 10, "%", 3},
 	}
 
 	for _, tt := range infixTests {

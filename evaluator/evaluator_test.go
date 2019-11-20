@@ -74,6 +74,7 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"5 + 5 ** 2", 30},
 		{"(5 + 5) ** 2", 100},
 		{"5 * 5 ** 2", 125},
+		{"10 % 3", 1},
 	}
 
 	for _, tt := range tests {
@@ -435,6 +436,44 @@ func TestWhileStatement(t *testing.T) {
 			sum;
 			`,
 			270,
+		},
+		{
+			`
+			cmpArray = |a, b| {
+				if len(a) != len(b) {
+					return 1;
+				}
+
+				length = len(a);
+				i = 0;
+				while i < length {
+					if a[i] != b[i] {
+						return 1;
+					}
+					i = i + 1;
+				}
+
+				return 0;
+			}
+
+			primes = [];
+			i = 2;
+			while i < 20 {
+				j = 2;
+				while j <= (i / j) {
+					if i % j == 0 {
+						break;
+					}
+					j = j + 1;
+				}
+				if j > (i / j) {
+					primes = push(primes, i)
+				}
+				i = i + 1
+			}
+			cmpArray(primes, [2, 3, 5, 7, 11, 13, 17, 19])
+			`,
+			0,
 		},
 	}
 

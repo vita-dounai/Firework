@@ -31,6 +31,7 @@ const (
 	EQ          = "=="
 	NOT_EQ      = "!="
 	VERTICAL    = "|"
+	PERCENT     = "%"
 
 	// Delimiters
 	COMMA     = ","
