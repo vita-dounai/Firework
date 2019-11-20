@@ -9,10 +9,11 @@ import (
 )
 
 var (
-	NULL  = &object.Null{}
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
-	BREAK = &object.Break{}
+	NULL     = &object.Null{}
+	TRUE     = &object.Boolean{Value: true}
+	FALSE    = &object.Boolean{Value: false}
+	BREAK    = &object.Break{}
+	CONTINUE = &object.Continue{}
 )
 
 func newError(format string, a ...interface{}) *object.Error {
@@ -196,8 +197,17 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 	for _, statement := range block.Statements {
 		result = Eval(statement, env)
 
-		if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ || result.Type() == object.BREAK_OBJ) {
-			return result
+		if result != nil {
+			switch result.Type() {
+			case object.RETURN_VALUE_OBJ:
+				fallthrough
+			case object.ERROR_OBJ:
+				fallthrough
+			case object.BREAK_OBJ:
+				fallthrough
+			case object.CONTINUE_OBJ:
+				return result
+			}
 		}
 	}
 
@@ -207,6 +217,14 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 func isError(obj object.Object) bool {
 	if obj != nil {
 		return obj.Type() == object.ERROR_OBJ
+	}
+
+	return false
+}
+
+func isReturn(obj object.Object) bool {
+	if obj != nil {
+		return obj.Type() == object.RETURN_VALUE_OBJ
 	}
 
 	return false
@@ -368,7 +386,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 			body := Eval(node.Body, env)
 
-			if isError(body) {
+			if isError(body) || isReturn(body) {
 				return body
 			}
 
@@ -378,6 +396,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 	case *ast.BreakStatement:
 		return BREAK
+	case *ast.ContinueStatement:
+		return CONTINUE
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
 		if len(elements) == 1 && isError(elements[0]) {

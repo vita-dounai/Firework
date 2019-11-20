@@ -467,13 +467,29 @@ func TestWhileStatement(t *testing.T) {
 					j = j + 1;
 				}
 				if j > (i / j) {
-					primes = push(primes, i)
+					primes = push(primes, i);
 				}
-				i = i + 1
+				i = i + 1;
 			}
-			cmpArray(primes, [2, 3, 5, 7, 11, 13, 17, 19])
+			cmpArray(primes, [2, 3, 5, 7, 11, 13, 17, 19]);
 			`,
 			0,
+		},
+		{
+			`
+			i = 1;
+			sum = 0;
+			while i <= 10 {
+				if i % 5 == 0 {
+					i = i + 1;
+					continue;
+				}
+				sum = sum + i;
+				i = i + 1;
+			}
+			sum;
+			`,
+			40,
 		},
 	}
 

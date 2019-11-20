@@ -27,10 +27,12 @@ const (
 )
 
 var (
-	BREAK_STATEMENT = &ast.BreakStatement{}
+	BREAK_STATEMENT    = &ast.BreakStatement{}
+	CONTINUE_STATEMENT = &ast.ContinueStatement{}
 
-	UNEXPECTED_EOF = &UnexpectedEOF{}
-	ILLEGAL_BREAK  = &IllegalBreak{}
+	UNEXPECTED_EOF   = &UnexpectedEOF{}
+	ILLEGAL_BREAK    = &IllegalBreak{}
+	ILLEGAL_CONTINUE = &IllegalContinue{}
 )
 
 var precedences = map[token.TokenType]int{
@@ -170,6 +172,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseWhileStatement()
 	case token.BREAK:
 		return p.parseBreakStatement()
+	case token.CONTINUE:
+		return p.parseContinueStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -240,6 +244,21 @@ func (p *Parser) parseBreakStatement() *ast.BreakStatement {
 	}
 
 	return BREAK_STATEMENT
+}
+
+func (p *Parser) parseContinueStatement() *ast.ContinueStatement {
+	// Swallow optional semicolon first to avoid triggering extra no prefix function error
+	// when continue statement is not in a loop statement
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	if p.inLoop == 0 {
+		p.errors = append(p.errors, ILLEGAL_CONTINUE)
+		return nil
+	}
+
+	return CONTINUE_STATEMENT
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {

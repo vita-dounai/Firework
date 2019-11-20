@@ -268,6 +268,13 @@ func (bs *BreakStatement) String() string {
 	return "break;"
 }
 
+type ContinueStatement struct{}
+
+func (cs *ContinueStatement) statementNode() {}
+func (cs *ContinueStatement) String() string {
+	return "continue;"
+}
+
 type ArrayLiteral struct {
 	Elements []Expression
 }

@@ -715,6 +715,7 @@ func TestWhileStatement(t *testing.T) {
 	while x < 10 {
 		x = x + 1;
 		break;
+		continue;
 	}
 	`
 
@@ -741,8 +742,8 @@ func TestWhileStatement(t *testing.T) {
 
 	bodyStmt := stmt.Body
 
-	if len(bodyStmt.Statements) != 2 {
-		t.Errorf("body is not 2 statements, got=%d\n",
+	if len(bodyStmt.Statements) != 3 {
+		t.Errorf("body is not 3 statements, got=%d\n",
 			len(bodyStmt.Statements))
 	}
 
@@ -764,6 +765,12 @@ func TestWhileStatement(t *testing.T) {
 	if !ok {
 		t.Fatalf("Statements[1] is not ast.AssignStatement, got=%T",
 			bodyStmt.Statements[1])
+	}
+
+	_, ok = bodyStmt.Statements[2].(*ast.ContinueStatement)
+	if !ok {
+		t.Fatalf("Statements[2] is not ast.AssignStatement, got=%T",
+			bodyStmt.Statements[2])
 	}
 }
 

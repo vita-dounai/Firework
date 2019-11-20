@@ -44,23 +44,25 @@ const (
 	RBRACKET  = "]"
 
 	// Keywords
-	TRUE   = "TRUE"
-	FALSE  = "FALSE"
-	IF     = "IF"
-	ELSE   = "ELSE"
-	RETURN = "RETURN"
-	WHILE  = "WHILE"
-	BREAK  = "BREAK"
+	TRUE     = "TRUE"
+	FALSE    = "FALSE"
+	IF       = "IF"
+	ELSE     = "ELSE"
+	RETURN   = "RETURN"
+	WHILE    = "WHILE"
+	BREAK    = "BREAK"
+	CONTINUE = "CONTINUE"
 )
 
 var keywords = map[string]TokenType{
-	"true":   TRUE,
-	"false":  FALSE,
-	"if":     IF,
-	"else":   ELSE,
-	"return": RETURN,
-	"while":  WHILE,
-	"break":  BREAK,
+	"true":     TRUE,
+	"false":    FALSE,
+	"if":       IF,
+	"else":     ELSE,
+	"return":   RETURN,
+	"while":    WHILE,
+	"break":    BREAK,
+	"continue": CONTINUE,
 }
 
 func LookupIdentifier(identifier string) TokenType {

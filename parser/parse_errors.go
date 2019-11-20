@@ -13,6 +13,7 @@ const (
 	NOPREFIX_FUNCTION_ERROR = "NOPREFIX_FUNCTION"
 	ILLEGAL_INTEGER_ERROR   = "ILLEGAL_INTEGER"
 	ILLEGAL_BREAK_ERROR     = "ILLEGAL_BREAK"
+	ILLEGAL_CONTINUE_ERROR  = "ILLEGAL_CONTINUE"
 )
 
 type ParseError interface {
@@ -92,5 +93,16 @@ func (ib *IllegalBreak) Type() string {
 
 func (ib *IllegalBreak) Info() string {
 	msg := fmt.Sprintf("break should be used in loop statement")
+	return msg
+}
+
+type IllegalContinue struct{}
+
+func (ib *IllegalContinue) Type() string {
+	return ILLEGAL_CONTINUE_ERROR
+}
+
+func (ib *IllegalContinue) Info() string {
+	msg := fmt.Sprintf("continue should be used in loop statement")
 	return msg
 }

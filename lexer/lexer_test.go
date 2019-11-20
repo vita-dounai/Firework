@@ -36,7 +36,7 @@ func TestNextToken(t *testing.T) {
 	"foo\tbar"
 	"foo\"bar"
 
-	while x < 2 { break; }
+	while x < 2 { break; continue; }
 	[1, 2];
 	3 % 2;
 	`
@@ -120,6 +120,8 @@ func TestNextToken(t *testing.T) {
 		{token.INT, "2"},
 		{token.LBRACE, "{"},
 		{token.BREAK, "break"},
+		{token.SEMICOLON, ";"},
+		{token.CONTINUE, "continue"},
 		{token.SEMICOLON, ";"},
 		{token.RBRACE, "}"},
 		{token.LBRACKET, "["},
