@@ -26,6 +26,13 @@ const (
 	INDEX       // array[index]
 )
 
+var (
+	BREAK_STATEMENT = &ast.BreakStatement{}
+
+	UNEXPECTED_EOF = &UnexpectedEOF{}
+	ILLEGAL_BREAK  = &IllegalBreak{}
+)
+
 var precedences = map[token.TokenType]int{
 	token.EQ:       EQUALS,
 	token.NOT_EQ:   EQUALS,
@@ -53,7 +60,8 @@ type Parser struct {
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
 
-	ident int
+	ident  int
+	inLoop int
 }
 
 func (p *Parser) Init(l *lexer.Lexer) {
@@ -159,6 +167,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.WHILE:
 		return p.parseWhileStatement()
+	case token.BREAK:
+		return p.parseBreakStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -199,6 +209,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *Parser) parseWhileStatement() *ast.WhileStatement {
+	p.inLoop++
 	statement := &ast.WhileStatement{}
 
 	p.nextToken()
@@ -211,7 +222,23 @@ func (p *Parser) parseWhileStatement() *ast.WhileStatement {
 
 	statement.Body = p.parseBlockStatement()
 
+	p.inLoop--
 	return statement
+}
+
+func (p *Parser) parseBreakStatement() *ast.BreakStatement {
+	// Swallow optional semicolon first to avoid triggering extra no prefix function error
+	// when break statement is not in a loop statement
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	if p.inLoop == 0 {
+		p.errors = append(p.errors, ILLEGAL_BREAK)
+		return nil
+	}
+
+	return BREAK_STATEMENT
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {

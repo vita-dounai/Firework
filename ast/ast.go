@@ -261,6 +261,13 @@ func (ws *WhileStatement) String() string {
 	return out.String()
 }
 
+type BreakStatement struct{}
+
+func (bs *BreakStatement) statementNode() {}
+func (bs *BreakStatement) String() string {
+	return "break;"
+}
+
 type ArrayLiteral struct {
 	Elements []Expression
 }

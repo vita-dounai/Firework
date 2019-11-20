@@ -20,6 +20,7 @@ const (
 	STRING_OBJ       = "STRING"
 	BUILTIN_OBJ      = "BUILTIN"
 	ARRAY_OBJ        = "ARRAY"
+	BREAK_OBJ        = "BREAK"
 )
 
 type Object interface {
@@ -120,3 +121,8 @@ func (a *Array) Inspect() string {
 	return out.String()
 }
 func (a *Array) Type() ObjectType { return ARRAY_OBJ }
+
+type Break struct{}
+
+func (bv *Break) Inspect() string  { return "" }
+func (bv *Break) Type() ObjectType { return BREAK_OBJ }

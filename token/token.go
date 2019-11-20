@@ -49,6 +49,7 @@ const (
 	ELSE   = "ELSE"
 	RETURN = "RETURN"
 	WHILE  = "WHILE"
+	BREAK  = "BREAK"
 )
 
 var keywords = map[string]TokenType{
@@ -58,6 +59,7 @@ var keywords = map[string]TokenType{
 	"else":   ELSE,
 	"return": RETURN,
 	"while":  WHILE,
+	"break":  BREAK,
 }
 
 func LookupIdentifier(identifier string) TokenType {

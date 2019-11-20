@@ -6,7 +6,14 @@ import (
 	"github.com/vita-dounai/Firework/token"
 )
 
-var UNEXPECTED_EOF = &UnexpectedEOF{}
+const (
+	UNEXPECTED_EOF_ERROR    = "UNEXPECTED_EOF"
+	ILLEGAL_SYNTAX_ERROR    = "ILLEGAL_SYNTAX"
+	ILLEGAL_SYMBOL_ERROR    = "ILLEGAL_SYMBOL"
+	NOPREFIX_FUNCTION_ERROR = "NOPREFIX_FUNCTION"
+	ILLEGAL_INTEGER_ERROR   = "ILLEGAL_INTEGER"
+	ILLEGAL_BREAK_ERROR     = "ILLEGAL_BREAK"
+)
 
 type ParseError interface {
 	Type() string
@@ -19,7 +26,7 @@ type IllegalSyntax struct {
 }
 
 func (is *IllegalSyntax) Type() string {
-	return "IllegalSyntax"
+	return ILLEGAL_SYNTAX_ERROR
 }
 
 func (is *IllegalSyntax) Info() string {
@@ -32,7 +39,7 @@ type IllegalSymbol struct {
 }
 
 func (is *IllegalSymbol) Type() string {
-	return "IllegalSymbol"
+	return ILLEGAL_SYMBOL_ERROR
 }
 
 func (is *IllegalSymbol) Info() string {
@@ -44,8 +51,7 @@ type UnexpectedEOF struct {
 }
 
 func (ue *UnexpectedEOF) Type() string {
-	// A special type of IllegalSyntax
-	return "IllegalSyntax"
+	return UNEXPECTED_EOF_ERROR
 }
 
 func (ue *UnexpectedEOF) Info() string {
@@ -57,7 +63,7 @@ type NoPrefixFunction struct {
 }
 
 func (npf *NoPrefixFunction) Type() string {
-	return "NoPrefixFunction"
+	return NOPREFIX_FUNCTION_ERROR
 }
 
 func (npf *NoPrefixFunction) Info() string {
@@ -70,10 +76,21 @@ type IllegalInteger struct {
 }
 
 func (ii *IllegalInteger) Type() string {
-	return "IllegalInteger"
+	return ILLEGAL_INTEGER_ERROR
 }
 
 func (ii *IllegalInteger) Info() string {
 	msg := fmt.Sprintf("counld not parse %q as integer", ii.Literal)
+	return msg
+}
+
+type IllegalBreak struct{}
+
+func (ib *IllegalBreak) Type() string {
+	return ILLEGAL_BREAK_ERROR
+}
+
+func (ib *IllegalBreak) Info() string {
+	msg := fmt.Sprintf("break should be used in loop statement")
 	return msg
 }

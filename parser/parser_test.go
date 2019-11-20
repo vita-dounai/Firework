@@ -713,6 +713,7 @@ func TestWhileStatement(t *testing.T) {
 	input := `
 	while x < 10 {
 		x = x + 1;
+		break;
 	}
 	`
 
@@ -739,23 +740,29 @@ func TestWhileStatement(t *testing.T) {
 
 	bodyStmt := stmt.Body
 
-	if len(bodyStmt.Statements) != 1 {
-		t.Errorf("body is not 1 statements, got=%d\n",
+	if len(bodyStmt.Statements) != 2 {
+		t.Errorf("body is not 2 statements, got=%d\n",
 			len(bodyStmt.Statements))
 	}
 
-	body, ok := bodyStmt.Statements[0].(*ast.AssignStatement)
+	assignStmt, ok := bodyStmt.Statements[0].(*ast.AssignStatement)
 	if !ok {
 		t.Fatalf("Statements[0] is not ast.AssignStatement, got=%T",
 			bodyStmt.Statements[0])
 	}
 
-	if !checkLiteralExpression(t, body.Name, "x") {
+	if !checkLiteralExpression(t, assignStmt.Name, "x") {
 		return
 	}
 
-	if !checkInfixExpression(t, body.Value, "x", "+", 1) {
+	if !checkInfixExpression(t, assignStmt.Value, "x", "+", 1) {
 		return
+	}
+
+	_, ok = bodyStmt.Statements[1].(*ast.BreakStatement)
+	if !ok {
+		t.Fatalf("Statements[1] is not ast.AssignStatement, got=%T",
+			bodyStmt.Statements[1])
 	}
 }
 

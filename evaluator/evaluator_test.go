@@ -392,17 +392,57 @@ func TestBuiltinFunctions(t *testing.T) {
 }
 
 func TestWhileStatement(t *testing.T) {
-	input := `
-	x = 1;
-	while x < 10 {
-		x = x + 1;
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{
+			`
+			x = 1;
+			while x < 10 {
+				x = x + 1;
+			}
+			x;
+			`,
+			10,
+		},
+		{
+			`
+			x = 1;
+			while x < 10 {
+				x = x + 1;
+				if x > 5 {
+					break;
+				}
+			}
+			x;
+			`,
+			6,
+		},
+		{
+			`
+			x = [[11, 12, 13, 14], [21, 22, 23, 24], [31, 32, 33, 34]];
+			sum = 0;
+			i = 0;
+			while i < len(x) {
+				j = 0;
+				while j < len(x[i]) {
+					sum = sum + x[i][j];
+					j = j + 1;
+				}
+				i = i + 1;
+			}
+			sum;
+			`,
+			270,
+		},
 	}
-	x;
-	`
 
-	evaluated := checkEval(input)
-	if !checkIntegerObject(t, evaluated, 10) {
-		return
+	for _, tt := range tests {
+		evaluated := checkEval(tt.input)
+		if !checkIntegerObject(t, evaluated, int64(tt.expected)) {
+			return
+		}
 	}
 }
 

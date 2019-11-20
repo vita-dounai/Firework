@@ -12,6 +12,7 @@ var (
 	NULL  = &object.Null{}
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
+	BREAK = &object.Break{}
 )
 
 func newError(format string, a ...interface{}) *object.Error {
@@ -193,7 +194,7 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 	for _, statement := range block.Statements {
 		result = Eval(statement, env)
 
-		if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ) {
+		if result != nil && (result.Type() == object.RETURN_VALUE_OBJ || result.Type() == object.ERROR_OBJ || result.Type() == object.BREAK_OBJ) {
 			return result
 		}
 	}
@@ -206,6 +207,13 @@ func isError(obj object.Object) bool {
 		return obj.Type() == object.ERROR_OBJ
 	}
 
+	return false
+}
+
+func isBreak(obj object.Object) bool {
+	if obj != nil {
+		return obj.Type() == object.BREAK_OBJ
+	}
 	return false
 }
 
@@ -346,16 +354,28 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 		return applyFunction(function, args)
 	case *ast.WhileStatement:
-		condition := Eval(node.Condition, env)
-		if isError(condition) {
-			return condition
-		}
-		for isTruthy(condition) {
+		for true {
+			condition := Eval(node.Condition, env)
+			if isError(condition) {
+				return condition
+			}
+
+			if !isTruthy(condition) {
+				break
+			}
+
 			body := Eval(node.Body, env)
+
 			if isError(body) {
 				return body
 			}
+
+			if isBreak(body) {
+				break
+			}
 		}
+	case *ast.BreakStatement:
+		return BREAK
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
 		if len(elements) == 1 && isError(elements[0]) {
