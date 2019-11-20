@@ -220,11 +220,16 @@ type ExpressionStatement struct {
 
 func (es *ExpressionStatement) statementNode() {}
 func (es *ExpressionStatement) String() string {
+	var out bytes.Buffer
+
 	if es.Expression != nil {
-		return es.Expression.String() + ";"
+		out.WriteString(es.Expression.String())
+		if _, ok := es.Expression.(*IfExpression); !ok {
+			out.WriteString(";")
+		}
 	}
 
-	return ""
+	return out.String()
 }
 
 type BlockStatement struct {
