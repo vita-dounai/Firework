@@ -229,6 +229,15 @@ func TestErrorHandling(t *testing.T) {
 			"Identifier not found: foobar",
 		},
 		{
+			`
+			{
+				foobar = 1;
+			}
+			foobar;
+			`,
+			"Identifier not found: foobar",
+		},
+		{
 			`"Hello" - "world"`,
 			"Unknown operator: STRING - STRING",
 		},

@@ -24,7 +24,22 @@ func (e *Environment) Get(name string) (Object, bool) {
 	return obj, ok
 }
 
+func (e *Environment) setIfExist(name string, value Object) bool {
+	if _, ok := e.store[name]; ok {
+		e.store[name] = value
+		return true
+	}
+
+	if e.outer != nil {
+		return e.outer.setIfExist(name, value)
+	}
+
+	return false
+}
+
 func (e *Environment) Set(name string, value Object) Object {
-	e.store[name] = value
+	if !e.setIfExist(name, value) {
+		e.store[name] = value
+	}
 	return value
 }

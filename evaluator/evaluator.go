@@ -192,10 +192,11 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 }
 
 func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) object.Object {
+	extendedEnv := object.ExtendEnvironment(env)
 	var result object.Object
 
 	for _, statement := range block.Statements {
-		result = Eval(statement, env)
+		result = Eval(statement, extendedEnv)
 
 		if result != nil {
 			switch result.Type() {

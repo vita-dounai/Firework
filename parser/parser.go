@@ -170,6 +170,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturnStatement()
 	case token.WHILE:
 		return p.parseWhileStatement()
+	case token.LBRACE:
+		return p.parseBlockStatement()
 	case token.BREAK:
 		return p.parseBreakStatement()
 	case token.CONTINUE:
