@@ -39,6 +39,7 @@ func TestNextToken(t *testing.T) {
 	while x < 2 { break; continue; }
 	[1, 2];
 	3 % 2;
+	{"foo": "bar"}
 	`
 
 	tests := []struct {
@@ -134,6 +135,11 @@ func TestNextToken(t *testing.T) {
 		{token.PERCENT, "%"},
 		{token.INT, "2"},
 		{token.SEMICOLON, ";"},
+		{token.LBRACE, "{"},
+		{token.STRING, "foo"},
+		{token.COLON, ":"},
+		{token.STRING, "bar"},
+		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	}
 

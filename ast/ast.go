@@ -55,8 +55,9 @@ type StringLiteral struct {
 	Value string
 }
 
-func (sl *StringLiteral) expressionNode() {}
-func (sl *StringLiteral) String() string  { return "\"" + sl.Value + "\"" }
+func (sl *StringLiteral) expressionNode()    {}
+func (sl *StringLiteral) String() string     { return "\"" + sl.Value + "\"" }
+func (sl *StringLiteral) PureString() string { return sl.Value }
 
 type PrefixExpression struct {
 	Operator string
@@ -314,6 +315,27 @@ func (ie *IndexExpression) String() string {
 	out.WriteString("[")
 	out.WriteString(ie.Index.String())
 	out.WriteString("])")
+
+	return out.String()
+}
+
+type MapLiteral struct {
+	Pairs map[Expression]Expression
+}
+
+func (ml *MapLiteral) expressionNode() {}
+func (ml *MapLiteral) String() string {
+	var out bytes.Buffer
+
+	pairs := []string{}
+
+	for key, value := range ml.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s:%s", key.String(), value.String()))
+	}
+
+	out.WriteString("{")
+	out.WriteString(strings.Join(pairs, ", "))
+	out.WriteString("}")
 
 	return out.String()
 }
