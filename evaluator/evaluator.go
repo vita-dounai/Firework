@@ -12,8 +12,8 @@ var (
 	NULL     = &object.Null{}
 	TRUE     = &object.Boolean{Value: true}
 	FALSE    = &object.Boolean{Value: false}
-	BREAK    = &object.Break{}
-	CONTINUE = &object.Continue{}
+	BREAK    = &object.LoopControl{ControlType: object.BREAK}
+	CONTINUE = &object.LoopControl{ControlType: object.CONTINUE}
 )
 
 func newError(format string, a ...interface{}) *object.Error {
@@ -204,9 +204,9 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 				fallthrough
 			case object.ERROR_OBJ:
 				fallthrough
-			case object.BREAK_OBJ:
+			case object.BREAK:
 				fallthrough
-			case object.CONTINUE_OBJ:
+			case object.CONTINUE:
 				return result
 			}
 		}
@@ -233,7 +233,7 @@ func isReturn(obj object.Object) bool {
 
 func isBreak(obj object.Object) bool {
 	if obj != nil {
-		return obj.Type() == object.BREAK_OBJ
+		return obj.Type() == object.BREAK
 	}
 	return false
 }
