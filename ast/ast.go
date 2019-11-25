@@ -246,6 +246,7 @@ func (bs *BlockStatement) String() string {
 	for _, s := range bs.Statements {
 		out.WriteString(fmt.Sprintf("%s%s\n", strings.Repeat("    ", bs.Ident), s.String()))
 	}
+
 	out.WriteString(fmt.Sprintf("%s}", strings.Repeat("    ", bs.Ident-1)))
 
 	return out.String()
@@ -330,7 +331,7 @@ func (ml *MapLiteral) String() string {
 	pairs := []string{}
 
 	for key, value := range ml.Pairs {
-		pairs = append(pairs, fmt.Sprintf("%s:%s", key.String(), value.String()))
+		pairs = append(pairs, fmt.Sprintf("%s: %s", key.String(), value.String()))
 	}
 
 	out.WriteString("{")

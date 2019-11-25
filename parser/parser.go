@@ -170,7 +170,10 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.WHILE:
 		return p.parseWhileStatement()
 	case token.LBRACE:
-		switch node := p.parseBlock().(type) {
+		p.ident++
+		node := p.parseBlock()
+		p.ident--
+		switch node := node.(type) {
 		case *ast.BlockStatement:
 			return node
 		case *ast.MapLiteral:
@@ -188,18 +191,25 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseBlock() ast.Node {
-	// Empty block statement
 	if p.peekTokenIs(token.RBRACE) {
+		// Return empty map instead of empty block statement
 		p.nextToken()
-		return &ast.BlockStatement{Ident: p.ident}
+
+		return &ast.MapLiteral{}
 	}
 
 	if p.peekTokenIs(token.LBRACE) {
 		p.nextToken()
+		p.ident++
 		node := p.parseBlock()
+		p.ident--
+
 		switch node := node.(type) {
 		case *ast.BlockStatement:
-			return p.parseBlockStatement(node)
+			p.nextToken()
+			blockStatement := p.parseBlockStatement(node, 0)
+
+			return blockStatement
 		case *ast.MapLiteral:
 			if p.peekTokenIs(token.COLON) {
 				p.nextToken()
@@ -207,30 +217,40 @@ func (p *Parser) parseBlock() ast.Node {
 
 				return p.parseMapLiteral(node)
 			}
-			return p.parseBlockStatement(&ast.ExpressionStatement{Expression: node})
-		default:
-			return nil
+
+			p.nextToken()
+			blockStatement := p.parseBlockStatement(&ast.ExpressionStatement{Expression: node}, 0)
+
+			return blockStatement
 		}
 	}
 
 	prefix := p.prefixParseFns[p.peekToken.Type]
 	if prefix == nil {
-		return p.parseBlockStatement(nil)
+		return p.parseBlockStatement(nil, 0)
 	}
 
 	p.nextToken()
 
 	expression := p.parseExpression(LOWEST)
-	p.nextToken()
 
-	if p.curTokenIs(token.COLON) {
+	if p.peekTokenIs(token.COLON) {
+		p.nextToken()
 		p.nextToken()
 		mapLiteral := p.parseMapLiteral(expression)
 
 		return mapLiteral
 	}
 
-	return p.parseBlockStatement(&ast.ExpressionStatement{Expression: expression})
+	if _, ok := expression.(*ast.Identifier); ok && p.peekTokenIs(token.ASSIGN) {
+		assignStatement := p.parseAssignStatement()
+
+		p.nextToken()
+		return p.parseBlockStatement(assignStatement, 0)
+	}
+
+	p.nextToken()
+	return p.parseBlockStatement(&ast.ExpressionStatement{Expression: expression}, 0)
 }
 
 func (p *Parser) parseMapLiteral(key ast.Expression) ast.Expression {
@@ -271,7 +291,6 @@ func (p *Parser) parseMapLiteral(key ast.Expression) ast.Expression {
 
 func (p *Parser) parseAssignStatement() *ast.AssignStatement {
 	statement := &ast.AssignStatement{}
-
 	statement.Name = &ast.Identifier{Value: p.curToken.Literal}
 
 	if !p.expectPeek(token.ASSIGN) {
@@ -315,7 +334,7 @@ func (p *Parser) parseWhileStatement() *ast.WhileStatement {
 		return nil
 	}
 
-	statement.Body = p.parseBlockStatement(nil)
+	statement.Body = p.parseBlockStatement(nil, 1)
 
 	p.inLoop--
 	return statement
@@ -415,20 +434,20 @@ func (p *Parser) parseIfExpression() ast.Expression {
 
 	p.expectPeek(token.LBRACE)
 
-	expression.Consequence = p.parseBlockStatement(nil)
+	expression.Consequence = p.parseBlockStatement(nil, 1)
 
 	if p.peekTokenIs(token.ELSE) {
 		p.nextToken()
 
 		p.expectPeek(token.LBRACE)
-		expression.Alternative = p.parseBlockStatement(nil)
+		expression.Alternative = p.parseBlockStatement(nil, 1)
 	}
 
 	return expression
 }
 
-func (p *Parser) parseBlockStatement(statement ast.Statement) *ast.BlockStatement {
-	p.ident++
+func (p *Parser) parseBlockStatement(statement ast.Statement, addIdent int) *ast.BlockStatement {
+	p.ident += addIdent
 
 	block := &ast.BlockStatement{Ident: p.ident}
 	if statement == nil {
@@ -453,7 +472,7 @@ func (p *Parser) parseBlockStatement(statement ast.Statement) *ast.BlockStatemen
 		p.nextToken()
 	}
 
-	p.ident--
+	p.ident -= addIdent
 	return block
 }
 
@@ -518,7 +537,7 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
 		return nil
 	}
 
-	function.Body = p.parseBlockStatement(nil)
+	function.Body = p.parseBlockStatement(nil, 1)
 
 	return function
 }

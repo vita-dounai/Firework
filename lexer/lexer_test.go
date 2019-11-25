@@ -156,3 +156,45 @@ func TestNextToken(t *testing.T) {
 		}
 	}
 }
+
+func TestTokenPosition(t *testing.T) {
+	input := `
+    |test| = {
+        12 + test;
+    }
+	`
+
+	tests := []struct {
+		expectedType   token.TokenType
+		expectedLine   int
+		expectedColumn int
+	}{
+		{token.VERTICAL, 2, 5},
+		{token.IDENTIFIER, 2, 6},
+		{token.VERTICAL, 2, 10},
+		{token.ASSIGN, 2, 12},
+		{token.LBRACE, 2, 14},
+		{token.INT, 3, 9},
+		{token.PLUS, 3, 12},
+		{token.IDENTIFIER, 3, 14},
+		{token.SEMICOLON, 3, 18},
+		{token.RBRACE, 4, 5},
+	}
+
+	l := NewLexer(input)
+	for i, tt := range tests {
+		tok := l.NextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - tokentype wrong. expectd=%q, got=%q", i, tt.expectedType, tok.Type)
+		}
+
+		if tok.Line != tt.expectedLine {
+			t.Fatalf("tests[%d] - line wrong. expected=%d, got=%d", i, tt.expectedLine, tok.Line)
+		}
+
+		if tok.Column != tt.expectedColumn {
+			t.Fatalf("tests[%d] - column wrong. expected=%d, got=%d", i, tt.expectedColumn, tok.Column)
+		}
+	}
+}
