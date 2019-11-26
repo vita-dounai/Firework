@@ -84,7 +84,8 @@ func Start(in io.Reader, out io.Writer) {
 }
 
 func printParserErrors(out io.Writer, errors []parser.ParseError) {
-	for _, err := range errors {
+	if len(errors) > 0 {
+		err := errors[0]
 		io.WriteString(out, err.Type()+": "+err.Info()+"\n")
 	}
 }

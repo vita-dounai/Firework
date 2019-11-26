@@ -23,7 +23,7 @@ type ParseError interface {
 
 type IllegalSyntax struct {
 	Expected token.TokenType
-	Got      token.TokenType
+	Got      token.Token
 }
 
 func (is *IllegalSyntax) Type() string {
@@ -31,7 +31,7 @@ func (is *IllegalSyntax) Type() string {
 }
 
 func (is *IllegalSyntax) Info() string {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead", is.Expected, is.Got)
+	msg := fmt.Sprintf("expected next token to be `%s`, got `%s` instead, at line: %d, column: %d", is.Expected, is.Got.Literal, is.Got.Line, is.Got.Column)
 	return msg
 }
 
@@ -44,7 +44,7 @@ func (is *IllegalSymbol) Type() string {
 }
 
 func (is *IllegalSymbol) Info() string {
-	msg := fmt.Sprintf("symbol not recognized %q", is.Symbol)
+	msg := fmt.Sprintf("symbol not recognized `%s`", is.Symbol)
 	return msg
 }
 
@@ -60,7 +60,7 @@ func (ue *UnexpectedEOF) Info() string {
 }
 
 type NoPrefixFunction struct {
-	Token token.TokenType
+	Token token.Token
 }
 
 func (npf *NoPrefixFunction) Type() string {
@@ -68,7 +68,8 @@ func (npf *NoPrefixFunction) Type() string {
 }
 
 func (npf *NoPrefixFunction) Info() string {
-	msg := fmt.Sprintf("no prefix parse function for %s found", npf.Token)
+	msg := fmt.Sprintf("no prefix parse function for `%s` found, line: %d, column: %d",
+		npf.Token.Literal, npf.Token.Line, npf.Token.Column)
 	return msg
 }
 
@@ -81,7 +82,7 @@ func (ii *IllegalInteger) Type() string {
 }
 
 func (ii *IllegalInteger) Info() string {
-	msg := fmt.Sprintf("counld not parse %q as integer", ii.Literal)
+	msg := fmt.Sprintf("counld not parse `%s` as integer", ii.Literal)
 	return msg
 }
 

@@ -295,15 +295,37 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 	}
 }
 
-func evalIndexExpression(arrayObject, indexObject object.Object) object.Object {
-	array := arrayObject.(*object.Array)
-	index := indexObject.(*object.Integer).Value
+func evalIndexExpression(leftObject, indexObject object.Object) object.Object {
+	switch left := leftObject.(type) {
+	case *object.Array:
+		index, ok := indexObject.(*object.Integer)
+		if !ok {
+			return newError("Subscript not support: %s", index.Type())
+		}
 
-	if index < 0 || index >= int64(len(array.Elements)) {
-		return NULL
+		subscript := index.Value
+
+		if subscript < 0 || subscript >= int64(len(left.Elements)) {
+			return NULL
+		}
+
+		return left.Elements[subscript]
+	case *object.Map:
+		index, ok := indexObject.(object.Hashable)
+
+		if !ok {
+			return newError("unusable as map key: %s", indexObject.Type())
+		}
+
+		hashKey := index.Hash()
+		pair, ok := left.Pairs[hashKey]
+		if !ok {
+			return NULL
+		}
+
+		return pair.Value
 	}
-
-	return array.Elements[index]
+	return NULL
 }
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
@@ -412,7 +434,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return left
 		}
 
-		if left.Type() != object.ARRAY_OBJ {
+		if left.Type() != object.ARRAY_OBJ && left.Type() != object.MAP_OBJ {
 			return newError("Index operator not support: %s", left.Type())
 		}
 
@@ -421,11 +443,31 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return index
 		}
 
-		if index.Type() != object.INTEGER_OBJ {
-			return newError("Subscript not support: %s", index.Type())
+		return evalIndexExpression(left, index)
+	case *ast.MapLiteral:
+		pairs := make(map[object.HashKey]object.MapPair)
+
+		for keyNode, valueNode := range node.Pairs {
+			key := Eval(keyNode, env)
+			if isError(key) {
+				return key
+			}
+
+			hashableKeyObject, ok := key.(object.Hashable)
+			if !ok {
+				return newError("unusable as map key: %s", key.Type())
+			}
+
+			value := Eval(valueNode, env)
+			if isError(value) {
+				return value
+			}
+
+			hashKey := hashableKeyObject.Hash()
+			pairs[hashKey] = object.MapPair{Key: key, Value: value}
 		}
 
-		return evalIndexExpression(left, index)
+		return &object.Map{Pairs: pairs}
 	}
 
 	return nil

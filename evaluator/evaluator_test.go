@@ -241,6 +241,10 @@ func TestErrorHandling(t *testing.T) {
 			`"Hello" - "world"`,
 			"Unknown operator: STRING - STRING",
 		},
+		{
+			`{"name": "cat"}[|x| {x}];`,
+			"unusable as map key: FUNCTION",
+		},
 	}
 
 	for _, tt := range tests {
@@ -577,6 +581,98 @@ func TestArrayIndexExpressions(t *testing.T) {
 		evaluated := checkEval(tt.input)
 
 		if integer, ok := tt.expected.(int); ok {
+			checkIntegerObject(t, evaluated, int64(integer))
+		} else {
+			checkNullObject(t, evaluated)
+		}
+	}
+}
+
+func TestMapLiterals(t *testing.T) {
+	input := `
+	two = "two";
+	{
+		"one": 10 - 9,
+		two: 1 + 1,
+		"thr" + "ee": 6 / 2,
+		4: 4,
+		true: 5,
+		false: 6
+	}`
+
+	evaluated := checkEval(input)
+	result, ok := evaluated.(*object.Map)
+	if !ok {
+		t.Fatalf("Eval didn't return Map, got=%T (%+v)", evaluated, evaluated)
+	}
+
+	expected := map[object.Object]int64{
+		&object.String{Value: "one"}:   1,
+		&object.String{Value: "two"}:   2,
+		&object.String{Value: "three"}: 3,
+		&object.Integer{Value: 4}:      4,
+		TRUE:                           5,
+		FALSE:                          6,
+	}
+
+	if len(result.Pairs) != len(expected) {
+		t.Fatalf("Map has wrong num of pairs, got=%d", len(result.Pairs))
+	}
+
+	for expectedKey, expectedValue := range expected {
+		hashKey := expectedKey.(object.Hashable).Hash()
+		pair, ok := result.Pairs[hashKey]
+		if !ok {
+			t.Errorf("no pair for given key in Pairs, key=%s", expectedKey.Inspect())
+		}
+
+		checkIntegerObject(t, pair.Value, expectedValue)
+	}
+}
+
+func TestMapIndexExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{
+			`{"foo": 5}["foo"]`,
+			5,
+		},
+		{
+			`{"foo": 5}["bar"]`,
+			nil,
+		},
+		{
+			`key = "foo"; {"foo": 5}[key]`,
+			5,
+		},
+		{
+			`{}["foo"]`,
+			nil,
+		},
+		{
+			`{5: 5}[5]`,
+			5,
+		},
+		{
+			`{true: 5}[true]`,
+			5,
+		},
+		{
+			`{false: 5}[false]`,
+			5,
+		},
+		{
+			`x = {"1": 1, "2": 2}; x["1"]`,
+			1,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := checkEval(tt.input)
+		integer, ok := tt.expected.(int)
+		if ok {
 			checkIntegerObject(t, evaluated, int64(integer))
 		} else {
 			checkNullObject(t, evaluated)

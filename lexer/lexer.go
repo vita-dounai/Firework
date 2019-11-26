@@ -95,12 +95,12 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func (l *Lexer) newToken(tokenType token.TokenType, literal string, startPosition int) token.Token {
+func (l *Lexer) newToken(tokenType token.TokenType, literal string, startLine int, startColumn int) token.Token {
 	return token.Token{
 		Type:    tokenType,
 		Literal: literal,
-		Line:    l.line,
-		Column:  startPosition,
+		Line:    startLine,
+		Column:  startColumn,
 	}
 }
 
@@ -119,96 +119,97 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.Ch {
 	case '=':
-		startPosition := l.column
+		startColumn := l.column
 		nextCh := l.peekChar()
 		if nextCh == '=' {
-			tok = l.newToken(token.EQ, token.EQ, startPosition)
+			tok = l.newToken(token.EQ, token.EQ, l.line, startColumn)
 			l.readChar()
 		} else {
-			tok = l.newToken(token.ASSIGN, string(l.Ch), startPosition)
+			tok = l.newToken(token.ASSIGN, string(l.Ch), l.line, startColumn)
 		}
 	case ';':
-		tok = l.newToken(token.SEMICOLON, string(l.Ch), l.column)
+		tok = l.newToken(token.SEMICOLON, string(l.Ch), l.line, l.column)
 	case '(':
-		tok = l.newToken(token.LPAREN, string(l.Ch), l.column)
+		tok = l.newToken(token.LPAREN, string(l.Ch), l.line, l.column)
 	case ')':
-		tok = l.newToken(token.RPAREN, string(l.Ch), l.column)
+		tok = l.newToken(token.RPAREN, string(l.Ch), l.line, l.column)
 	case ',':
-		tok = l.newToken(token.COMMA, string(l.Ch), l.column)
+		tok = l.newToken(token.COMMA, string(l.Ch), l.line, l.column)
 	case '+':
-		tok = l.newToken(token.PLUS, string(l.Ch), l.column)
+		tok = l.newToken(token.PLUS, string(l.Ch), l.line, l.column)
 	case '{':
-		tok = l.newToken(token.LBRACE, string(l.Ch), l.column)
+		tok = l.newToken(token.LBRACE, string(l.Ch), l.line, l.column)
 	case '}':
-		tok = l.newToken(token.RBRACE, string(l.Ch), l.column)
+		tok = l.newToken(token.RBRACE, string(l.Ch), l.line, l.column)
 	case '[':
-		tok = l.newToken(token.LBRACKET, string(l.Ch), l.column)
+		tok = l.newToken(token.LBRACKET, string(l.Ch), l.line, l.column)
 	case ']':
-		tok = l.newToken(token.RBRACKET, string(l.Ch), l.column)
+		tok = l.newToken(token.RBRACKET, string(l.Ch), l.line, l.column)
 	case ':':
-		tok = l.newToken(token.COLON, string(l.Ch), l.column)
+		tok = l.newToken(token.COLON, string(l.Ch), l.line, l.column)
 	case '-':
-		tok = l.newToken(token.MINUS, string(l.Ch), l.column)
+		tok = l.newToken(token.MINUS, string(l.Ch), l.line, l.column)
 	case '!':
-		startPosition := l.column
+		startColumn := l.column
 		nextCh := l.peekChar()
 		if nextCh == '=' {
-			tok = l.newToken(token.NOT_EQ, token.NOT_EQ, startPosition)
-			tok = l.newToken(token.NOT_EQ, token.NOT_EQ, startPosition)
+			tok = l.newToken(token.NOT_EQ, token.NOT_EQ, l.line, startColumn)
 			l.readChar()
 		} else {
-			tok = l.newToken(token.EXCLAMATION, string(l.Ch), startPosition)
+			tok = l.newToken(token.EXCLAMATION, string(l.Ch), l.line, startColumn)
 		}
 	case '*':
-		startPosition := l.column
+		startColumn := l.column
 		nextCh := l.peekChar()
 		if nextCh == '*' {
-			tok = l.newToken(token.EXP, token.EXP, startPosition)
+			tok = l.newToken(token.EXP, token.EXP, l.line, startColumn)
 			l.readChar()
 		} else {
-			tok = l.newToken(token.ASTERISK, string(l.Ch), startPosition)
+			tok = l.newToken(token.ASTERISK, string(l.Ch), l.line, startColumn)
 		}
 	case '/':
-		tok = l.newToken(token.SLASH, string(l.Ch), l.column)
+		tok = l.newToken(token.SLASH, string(l.Ch), l.line, l.column)
 	case '<':
-		startPosition := l.column
+		startColumn := l.column
 		nextCh := l.peekChar()
 		if nextCh == '=' {
-			tok = l.newToken(token.LTE, token.LTE, startPosition)
+			tok = l.newToken(token.LTE, token.LTE, l.line, startColumn)
 			l.readChar()
 		} else {
-			tok = l.newToken(token.LT, string(l.Ch), startPosition)
+			tok = l.newToken(token.LT, string(l.Ch), l.line, startColumn)
 		}
 	case '>':
-		startPosition := l.column
+		startColumn := l.column
 		nextCh := l.peekChar()
 		if nextCh == '=' {
-			tok = l.newToken(token.GTE, token.GTE, startPosition)
+			tok = l.newToken(token.GTE, token.GTE, l.line, startColumn)
 			l.readChar()
 		} else {
-			tok = l.newToken(token.GT, string(l.Ch), startPosition)
+			tok = l.newToken(token.GT, string(l.Ch), l.line, startColumn)
 		}
 	case '|':
-		tok = l.newToken(token.VERTICAL, string(l.Ch), l.column)
+		tok = l.newToken(token.VERTICAL, string(l.Ch), l.line, l.column)
 	case '%':
-		tok = l.newToken(token.PERCENT, string(l.Ch), l.column)
+		tok = l.newToken(token.PERCENT, string(l.Ch), l.line, l.column)
 	case '"':
-		tok.Type = token.STRING
-		tok.Literal = l.readString()
+		startLine := l.line
+		startColumn := l.column
+		tok = l.newToken(token.STRING, l.readString(), startLine, startColumn)
 	case 0:
-		tok = l.newToken(token.EOF, "", l.column)
+		tok = l.newToken(token.EOF, "", l.line, l.column)
 	default:
-		startPosition := l.column
+		startLine := l.line
+		startColumn := l.column
 		if isLetter(l.Ch) || l.Ch == '_' {
 			identifier := l.readIdentifier()
-			tok = l.newToken(token.LookupIdentifier(identifier), identifier, startPosition)
+			tok = l.newToken(token.LookupIdentifier(identifier), identifier, startLine, startColumn)
 			return tok
 		} else if isDigit(l.Ch) {
 			number := l.readNumber()
-			tok = l.newToken(token.INT, number, startPosition)
+			tok = l.newToken(token.INT, number, startLine, startColumn)
 			return tok
 		} else {
-			tok = l.newToken(token.ILLEGAL, string(l.Ch), startPosition)
+			tok = l.newToken(token.ILLEGAL, string(l.Ch), startLine, startColumn)
 		}
 	}
 	l.readChar()

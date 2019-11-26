@@ -797,7 +797,7 @@ func TestParsingArrayLiterals(t *testing.T) {
 	checkInfixExpression(t, array.Elements[2], 3, "+", 3)
 }
 
-func TestParsingIndexExpressions(t *testing.T) {
+func TestParsingArrayIndexExpressions(t *testing.T) {
 	input := "myArray[1 + 1]"
 	l := lexer.NewLexer(input)
 	p := NewParser()
@@ -808,11 +808,42 @@ func TestParsingIndexExpressions(t *testing.T) {
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	indexExp, ok := stmt.Expression.(*ast.IndexExpression)
 	if !ok {
-		t.Fatalf("exp not *ast.IndexExpression, got=%T", stmt.Expression)
+		t.Fatalf("exp is not *ast.IndexExpression, got=%T", stmt.Expression)
 	}
+
 	if !checkIdentifier(t, indexExp.Left, "myArray") {
 		return
 	}
+
+	if !checkInfixExpression(t, indexExp.Index, 1, "+", 1) {
+		return
+	}
+}
+
+func TestParsingMapIndexExpressions(t *testing.T) {
+	input := `{2: "2"}[1 + 1]`
+	l := lexer.NewLexer(input)
+	p := NewParser()
+	p.Init(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Errorf("program.Statements is not 1 statements, got=%d\n",
+			len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	indexExp, ok := stmt.Expression.(*ast.IndexExpression)
+	if !ok {
+		t.Fatalf("exp not *ast.IndexExpression, got=%T", stmt.Expression)
+	}
+
+	_, ok = indexExp.Left.(*ast.MapLiteral)
+	if !ok {
+		t.Fatalf("indexExp.Left is not *ast.MapLiteral, got=%T", indexExp.Left)
+	}
+
 	if !checkInfixExpression(t, indexExp.Index, 1, "+", 1) {
 		return
 	}
@@ -922,6 +953,24 @@ func TestParsingMapLiteralsIntegerKeys(t *testing.T) {
 	}
 }
 
+func TestParsingEmptyBlock(t *testing.T) {
+	input := "{}"
+	l := lexer.NewLexer(input)
+	p := NewParser()
+	p.Init(l)
+	program := p.ParseProgram()
+	checkParseErrors(t, p)
+
+	stmt, ok := program.Statements[0].(*ast.BlockStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.BlockStatement, got=%T", program.Statements[0])
+	}
+
+	if len(stmt.Statements) != 0 {
+		t.Errorf("stmt.Statements has wrong length, got=%d", len(stmt.Statements))
+	}
+}
+
 func TestParsingEmptyMapLiteral(t *testing.T) {
 	input := "x = {}"
 	l := lexer.NewLexer(input)
@@ -942,7 +991,7 @@ func TestParsingEmptyMapLiteral(t *testing.T) {
 }
 
 func TestParsingNestedMapLiteral(t *testing.T) {
-	input := "{{1: 1}: 1, 2: {2: 2}}"
+	input := "{{1: 1}: true, 2: {2: 2}}"
 	l := lexer.NewLexer(input)
 	p := NewParser()
 	p.Init(l)
