@@ -63,7 +63,7 @@ func Start(in io.Reader, out io.Writer) {
 			}
 
 			restLine := scanner.Text()
-			line += restLine
+			line += "\n" + restLine
 
 			l := lexer.NewLexer(line)
 			p.Init(l)
