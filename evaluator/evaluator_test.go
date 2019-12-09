@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/vita-dounai/Firework/lexer"
@@ -676,6 +677,220 @@ func TestMapIndexExpressions(t *testing.T) {
 			checkIntegerObject(t, evaluated, int64(integer))
 		} else {
 			checkNullObject(t, evaluated)
+		}
+	}
+}
+
+func TestQuote(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			`quote(5)`,
+			`5`,
+		},
+		{
+			`quote(5 + 8)`,
+			`(5 + 8)`,
+		},
+		{
+			`quote(foobar)`,
+			`foobar`,
+		},
+		{
+			`quote(foobar + barfoo)`,
+			`(foobar + barfoo)`,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := checkEval(tt.input)
+		quote, ok := evaluated.(*object.Quote)
+		if !ok {
+			t.Fatalf("expected *object.Quote, got=%T (%+v)", evaluated, evaluated)
+		}
+
+		if quote.Node == nil {
+			t.Fatalf("quote.Node is nil")
+		}
+
+		if quote.Node.String() != tt.expected {
+			t.Errorf("not equal, got=%q, want=%q", quote.Node.String(), tt.expected)
+		}
+	}
+}
+
+func TestQuoteUnquote(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+
+		{
+			`quote(unquote(4))`,
+			`4`,
+		},
+		{
+			`quote(unquote(4 + 4))`,
+			`8`,
+		},
+		{
+			`quote(8 + unquote(4 + 4))`,
+			`(8 + 8)`,
+		},
+		{
+			`quote(unquote(4 + 4) + 8)`,
+			`(8 + 8)`,
+		},
+		{
+			`foobar = 8;
+			quote(foobar)`,
+			`foobar`,
+		},
+		{
+			`foobar = 8;
+			quote(unquote(foobar))`,
+			`8`,
+		},
+		{
+			`quote(unquote(true))`,
+			`true`,
+		},
+		{
+			`quote(unquote(true == false))`,
+			`false`,
+		},
+		{
+			`quote(unquote(quote(4 + 4)))`,
+			`(4 + 4)`,
+		},
+		{
+			`quotedInfixExpression = quote(4 + 4);
+			quote(unquote(4 + 4) + unquote(quotedInfixExpression))`,
+			`(8 + (4 + 4))`,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := checkEval(tt.input)
+		quote, ok := evaluated.(*object.Quote)
+		if !ok {
+			t.Fatalf("expected *object.Quote. got=%T (%+v)",
+				evaluated, evaluated)
+		}
+		if quote.Node == nil {
+			t.Fatalf("quote.Node is nil")
+		}
+		if quote.Node.String() != tt.expected {
+			t.Errorf("not equal. got=%q, want=%q",
+				quote.Node.String(), tt.expected)
+		}
+	}
+}
+
+func TestDefineMacros(t *testing.T) {
+	input := `
+	number = 1;
+	function = |x, y| { x + y };
+	mymacro = macro(x, y) { x + y; };
+	`
+
+	env := object.NewEnvironment()
+	l := lexer.NewLexer(input)
+	p := parser.NewParser()
+	p.Init(l)
+	program := p.ParseProgram()
+
+	DefineMacros(program, env)
+
+	// Ignore macro definitions
+	if len(program.Statements) != 2 {
+		t.Fatalf("Wrong number of statements, got=%d",
+			len(program.Statements))
+	}
+
+	// `number` and `function` shouldn't be evaluated
+	_, ok := env.Get("number")
+	if ok {
+		t.Fatalf("number should not be defined")
+	}
+
+	_, ok = env.Get("function")
+	if ok {
+		t.Fatalf("function should not be defined")
+	}
+
+	// `mymacro` should be defined in environment
+	obj, ok := env.Get("mymacro")
+	if !ok {
+		t.Fatalf("macro not in environment.")
+	}
+
+	macro, ok := obj.(*object.Macro)
+	if !ok {
+		t.Fatalf("object is not Macro, got=%T (%+v)", obj, obj)
+	}
+
+	if len(macro.Parameters) != 2 {
+		t.Fatalf("Wrong number of macro parameters, got=%d",
+			len(macro.Parameters))
+	}
+
+	if macro.Parameters[0].String() != "x" {
+		t.Fatalf("parameter is not 'x', got=%q", macro.Parameters[0])
+	}
+
+	if macro.Parameters[1].String() != "y" {
+		t.Fatalf("parameter is not 'y', got=%q", macro.Parameters[1])
+	}
+
+	expectedBody := "(x + y);"
+	gotBody := strings.Trim(macro.Body.String(), "{}\n ")
+	if gotBody != expectedBody {
+		t.Fatalf("body is not %q, got=%q", expectedBody, gotBody)
+	}
+}
+
+func TestExpandMacros(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			`
+			infixExpression = macro() { quote(1 + 2); };
+			infixExpression();
+			`,
+			`(1 + 2)`,
+		},
+		{
+			`
+			reverse = macro(a, b) { quote(unquote(b) - unquote(a)); };
+			reverse(2 + 2, 10 - 5);
+			`,
+			`(10 - 5) - (2 + 2)`,
+		},
+	}
+
+	p := parser.NewParser()
+
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.expected)
+		p.Init(l)
+		expected := p.ParseProgram()
+
+		l = lexer.NewLexer(tt.input)
+		p.Init(l)
+		program := p.ParseProgram()
+
+		env := object.NewEnvironment()
+		DefineMacros(program, env)
+
+		expanded := ExpandMacros(program, env)
+		if expanded.String() != expected.String() {
+			t.Errorf("not equal, want=%q, got=%q",
+				expected.String(), expanded.String())
 		}
 	}
 }

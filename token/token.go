@@ -55,6 +55,7 @@ const (
 	WHILE    = "WHILE"
 	BREAK    = "BREAK"
 	CONTINUE = "CONTINUE"
+	MACRO    = "MACRO"
 )
 
 var keywords = map[string]TokenType{
@@ -66,6 +67,7 @@ var keywords = map[string]TokenType{
 	"while":    WHILE,
 	"break":    BREAK,
 	"continue": CONTINUE,
+	"macro":    MACRO,
 }
 
 func LookupIdentifier(identifier string) TokenType {

@@ -24,6 +24,8 @@ const (
 	BREAK            = "BREAK"
 	CONTINUE         = "CONTINUE"
 	MAP_OBJ          = "MAP"
+	QUOTE_OBJ        = "QUOTE"
+	MACRO_OBJ        = "MARCO"
 )
 
 type Object interface {
@@ -187,3 +189,42 @@ func (m *Map) Inspect() string {
 	return out.String()
 }
 func (m *Map) Type() ObjectType { return MAP_OBJ }
+
+type Quote struct {
+	Node ast.Node
+}
+
+func (q *Quote) Inspect() string {
+	return "QUOTE(" + q.Node.String() + ")"
+}
+
+func (q *Quote) Type() ObjectType {
+	return QUOTE_OBJ
+}
+
+type Macro struct {
+	Parameters []*ast.Identifier
+	Body       *ast.BlockStatement
+	Env        *Environment
+}
+
+func (m *Macro) Inspect() string {
+	var out bytes.Buffer
+
+	parameters := []string{}
+	for _, p := range m.Parameters {
+		parameters = append(parameters, p.String())
+	}
+
+	out.WriteString("macro")
+	out.WriteString("(")
+	out.WriteString(strings.Join(parameters, ", "))
+	out.WriteString(") ")
+	out.WriteString(m.Body.String())
+
+	return out.String()
+}
+
+func (m *Macro) Type() ObjectType {
+	return MACRO_OBJ
+}

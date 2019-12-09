@@ -604,7 +604,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 func (p *Parser) parseFunctionLiteral() ast.Expression {
 	function := &ast.FunctionLiteral{}
 
-	function.Parameters = p.parseFunctionParameters()
+	function.Parameters = p.parseFunctionParameters(token.VERTICAL)
 
 	if !p.expectPeek(token.LBRACE) {
 		return nil
@@ -615,11 +615,29 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
 	return function
 }
 
-func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+func (p *Parser) parseMacroLiteral() ast.Expression {
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	function := &ast.MacroLiteral{}
+
+	function.Parameters = p.parseFunctionParameters(token.RPAREN)
+
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+
+	function.Body = p.parseBlockStatement()
+
+	return function
+}
+
+func (p *Parser) parseFunctionParameters(end token.TokenType) []*ast.Identifier {
 	identifiers := []*ast.Identifier{}
 	p.nextToken()
 
-	if p.curTokenIs(token.VERTICAL) {
+	if p.curTokenIs(end) {
 		return identifiers
 	}
 
@@ -634,7 +652,7 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 		identifiers = append(identifiers, identifier)
 	}
 
-	if !p.expectPeek(token.VERTICAL) {
+	if !p.expectPeek(end) {
 		return nil
 	}
 
@@ -717,6 +735,7 @@ func NewParser() *Parser {
 	parser.registerPrefix(token.STRING, parser.parseStringLiteral)
 	parser.registerPrefix(token.LBRACKET, parser.parseArrayLiteral)
 	parser.registerPrefix(token.LBRACE, parser.parseMapLiteral)
+	parser.registerPrefix(token.MACRO, parser.parseMacroLiteral)
 
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 	parser.registerInfix(token.PLUS, parser.parseInfixExpression)

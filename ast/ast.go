@@ -124,7 +124,7 @@ func (ie *IfExpression) String() string {
 	out.WriteString(ie.Consequence.String())
 
 	if ie.Alternative != nil {
-		out.WriteString("else ")
+		out.WriteString(" else ")
 		out.WriteString(ie.Alternative.String())
 	}
 
@@ -339,4 +339,85 @@ func (ml *MapLiteral) String() string {
 	out.WriteString("}")
 
 	return out.String()
+}
+
+type MacroLiteral struct {
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (ml *MacroLiteral) expressionNode() {}
+func (ml *MacroLiteral) String() string {
+	var out bytes.Buffer
+
+	parameters := []string{}
+	for _, parameter := range ml.Parameters {
+		parameters = append(parameters, parameter.String())
+	}
+
+	out.WriteString("marco")
+	out.WriteString("(")
+	out.WriteString(strings.Join(parameters, ", "))
+	out.WriteString(") ")
+	out.WriteString(ml.Body.String())
+
+	return out.String()
+}
+
+type ModifierFunc func(Node) Node
+
+func Modify(node Node, modifier ModifierFunc) Node {
+	switch node := node.(type) {
+	case *Program:
+		for i, statement := range node.Statements {
+			node.Statements[i], _ = Modify(statement, modifier).(Statement)
+		}
+	case *ExpressionStatement:
+		node.Expression, _ = Modify(node.Expression, modifier).(Expression)
+	case *InfixExpression:
+		node.Left, _ = Modify(node.Left, modifier).(Expression)
+		node.Right, _ = Modify(node.Right, modifier).(Expression)
+	case *PrefixExpression:
+		node.Right, _ = Modify(node.Right, modifier).(Expression)
+	case *IndexExpression:
+		node.Left, _ = Modify(node.Index, modifier).(Expression)
+		node.Index, _ = Modify(node.Index, modifier).(Expression)
+	case *IfExpression:
+		node.Condition, _ = Modify(node.Condition, modifier).(Expression)
+		node.Consequence, _ = Modify(node.Consequence, modifier).(*BlockStatement)
+		if node.Alternative != nil {
+			node.Alternative, _ = Modify(node.Alternative, modifier).(*BlockStatement)
+		}
+	case *BlockStatement:
+		for i := range node.Statements {
+			node.Statements[i], _ = Modify(node.Statements[i], modifier).(Statement)
+		}
+	case *ReturnStatement:
+		node.ReturnValue, _ = Modify(node.ReturnValue, modifier).(Expression)
+	case *AssignStatement:
+		node.Value, _ = Modify(node.Value, modifier).(Expression)
+	case *FunctionLiteral:
+		for i := range node.Parameters {
+			node.Parameters[i], _ = Modify(node.Parameters[i], modifier).(*Identifier)
+		}
+
+		node.Body, _ = Modify(node.Body, modifier).(*BlockStatement)
+	case *ArrayLiteral:
+		for i := range node.Elements {
+			node.Elements[i], _ = Modify(node.Elements[i], modifier).(Expression)
+		}
+	case *MapLiteral:
+		newPairs := make(map[Expression]Expression)
+		for key, val := range node.Pairs {
+			newKey, _ := Modify(key, modifier).(Expression)
+			newVal, _ := Modify(val, modifier).(Expression)
+			newPairs[newKey] = newVal
+		}
+		node.Pairs = newPairs
+	case *WhileStatement:
+		node.Condition, _ = Modify(node.Condition, modifier).(Expression)
+		node.Body, _ = Modify(node.Body, modifier).(*BlockStatement)
+	}
+
+	return modifier(node)
 }
